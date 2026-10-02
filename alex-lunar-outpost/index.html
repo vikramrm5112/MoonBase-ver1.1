@@ -1,342 +1,589 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LUNAR OUTPOST ALPHA :: MISSION TERMINAL</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUNAR OUTPOST ALPHA :: TERMINAL</title>
   <style>
-    .border-console-thin {
-      border: 1px solid #15803d;
+    :root {
+      --cyan: #00f0ff;
+      --cyan-dim: rgba(0, 240, 255, 0.15);
+      --cyan-glow: rgba(0, 240, 255, 0.4);
+      --amber: #ffb700;
+      --red: #ff3366;
+      --bg-dark: #050914;
+      --panel-bg: rgba(8, 16, 32, 0.85);
     }
-    .scrollbar-thin::-webkit-scrollbar {
-      width: 4px;
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    .scrollbar-thin::-webkit-scrollbar-track {
-      background: #09090b;
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--cyan);
+      font-family: 'Courier New', Courier, monospace;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .scrollbar-thin::-webkit-scrollbar-thumb {
-      background: #15803d;
+
+    /* Scanline overlay */
+    body::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
+      background-size: 100% 4px;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* Header */
+    header {
+      background: rgba(4, 10, 22, 0.95);
+      border-bottom: 1px solid var(--cyan);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 0 15px var(--cyan-dim);
+      z-index: 10;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      text-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    .time-display {
+      font-size: 0.9rem;
+      color: var(--amber);
+      text-shadow: 0 0 6px rgba(255, 183, 0, 0.5);
+    }
+
+    /* Main Grid */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      flex: 1;
+      height: calc(100vh - 50px);
+      gap: 12px;
+      padding: 12px;
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--cyan);
+      border-radius: 4px;
+      box-shadow: inset 0 0 15px var(--cyan-dim), 0 0 10px rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      background: rgba(0, 240, 255, 0.1);
+      border-bottom: 1px solid var(--cyan);
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Left Sidebar Visuals & Telemetry */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 3D Canvas Container */
+    #canvas-container {
+      width: 100%;
+      height: 200px;
+      position: relative;
+      background: radial-gradient(circle, rgba(0,240,255,0.05) 0%, rgba(0,0,0,0.4) 100%);
+    }
+
+    #moon-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Meaningless Telemetry Wave Visualizer */
+    .waveform-container {
+      height: 70px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .waveform-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Telemetry Bars */
+    .telemetry-grid {
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 0.75rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .telemetry-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .telemetry-label {
+      display: flex;
+      justify-content: space-between;
+      opacity: 0.8;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--cyan);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--cyan);
+      width: 80%;
+      box-shadow: 0 0 6px var(--cyan);
+      transition: width 0.4s ease;
+    }
+
+    .progress-fill.warning {
+      background: var(--amber);
+      box-shadow: 0 0 6px var(--amber);
+    }
+
+    .progress-fill.critical {
+      background: var(--red);
+      box-shadow: 0 0 6px var(--red);
+    }
+
+    /* Main Terminal Feed */
+    .terminal-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .terminal-logs {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .log-entry {
+      border-left: 2px solid var(--cyan);
+      padding-left: 10px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .log-entry.user {
+      border-color: var(--amber);
+      color: #ffe89e;
+    }
+
+    .log-entry.system {
+      border-color: #888;
+      color: #aaa;
+      font-style: italic;
+    }
+
+    .log-header {
+      font-size: 0.7rem;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+
+    /* Controls */
+    .input-row {
+      border-top: 1px solid var(--cyan);
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      background: rgba(0,0,0,0.3);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      padding: 10px 12px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      box-shadow: 0 0 10px var(--cyan-dim);
+    }
+
+    button {
+      background: rgba(0, 240, 255, 0.15);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      padding: 10px 16px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
-</head>
-<body class="bg-black text-green-500 font-mono min-h-screen flex flex-col p-2 sm:p-4 selection:bg-green-500 selection:text-black">
 
-  <!-- TOP HEADER & STATUS BAR -->
-  <header class="border border-green-800 bg-zinc-950 p-3 mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-    <div>
-      <h1 class="text-base font-black tracking-widest text-green-400 uppercase">Lunar Outpost Alpha // RF Terminal</h1>
-      <p class="text-[10px] text-green-700">STATION ID: LOA-42-B | OPERATOR: ALEX RIVERA</p>
-    </div>
-    <div class="text-right flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto text-[11px] border-t sm:border-t-0 border-zinc-800 pt-1 sm:pt-0">
-      <span class="text-green-600 font-bold">SIGNAL: DIRECT RF [STABLE]</span>
-      <span id="lmt-clock" class="text-zinc-600 font-mono text-[10px] tracking-tight">SOL 1 :: LUNAR TIME 06:00 LST</span>
-    </div>
+  <!-- Three.js Library for Holographic Moon Visual -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <h1>[RF-LINK ACTIVE] LUNAR OUTPOST ALPHA</h1>
+    <div class="time-display" id="time-display">[SOL 01 :: 06:00 LST]</div>
   </header>
 
-  <!-- MAIN WORKSPACE GRID -->
-  <div class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-3 mb-3 min-h-0">
+  <div class="dashboard">
     
-    <!-- CHAT TERMINAL (3/4 Width on LG screens) -->
-    <main class="lg:col-span-3 flex flex-col border border-green-800 bg-zinc-950 p-3 overflow-hidden relative">
-      <div id="chat-log" class="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin max-h-[55vh] lg:max-h-[60vh]">
-        <div class="text-xs text-green-700 italic border-b border-zinc-800 pb-2">
-          [SYSTEM INITIALIZED] Direct RF Link established. Auto-telemetry updates enabled (30s interval).
-        </div>
-      </div>
-
-      <!-- FORM -->
-      <form id="chat-form" class="mt-3 pt-3 border-t border-green-900 flex gap-2">
-        <input 
-          type="text" 
-          id="user-input" 
-          autocomplete="off" 
-          placeholder="Command or assist Alex (e.g., 'Check solar panel wiring' or 'Go to sleep')..." 
-          class="flex-1 bg-black border border-green-700 text-green-400 px-3 py-2 text-sm focus:outline-none focus:border-green-400 placeholder-green-800"
-        />
-        <button 
-          type="submit" 
-          id="send-btn"
-          class="bg-green-950 hover:bg-green-900 text-green-400 border border-green-600 px-5 py-2 text-sm font-bold uppercase transition-colors disabled:opacity-50"
-        >
-          Transmit
-        </button>
-      </form>
-    </main>
-
-    <!-- RIGHT PANEL: INSTRUCTION & MISSION CONTROL BOX -->
-    <aside class="lg:col-span-1 flex flex-col border border-green-800 bg-zinc-950 p-3 space-y-3 overflow-y-auto scrollbar-thin max-h-[55vh] lg:max-h-[60vh]">
+    <!-- Left Visuals & Status Panel -->
+    <div class="sidebar">
       
-      <!-- MISSION TIMELINE TRACKER -->
-      <div class="border-b border-green-900 pb-2">
-        <h2 class="text-xs font-bold text-green-400 uppercase tracking-wider mb-1">Mission Timeline</h2>
-        <div class="flex justify-between text-[11px] text-green-600 font-bold mb-1">
-          <span>PROGRESS</span>
-          <span id="sol-tracker-text">SOL 1 / 13</span>
+      <!-- 3D Holographic Moon Visual -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>Orbital Telemetry</span>
+          <span>3D ORBIT</span>
         </div>
-        <div class="w-full bg-zinc-900 h-2 border border-green-900">
-          <div id="sol-progress-bar" class="bg-green-500 h-full w-[7.6%] transition-all duration-500"></div>
+        <div id="canvas-container">
+          <canvas id="moon-canvas"></canvas>
         </div>
       </div>
 
-      <!-- OPERATIONAL PROTOCOLS / INSTRUCTIONS -->
-      <div class="space-y-2 text-xs">
-        <h2 class="text-xs font-bold text-green-400 uppercase tracking-wider">Mission Instructions</h2>
-        <ul class="list-disc list-inside text-green-600 text-[11px] space-y-1">
-          <li><strong class="text-green-500">Auto Pings:</strong> Alex transmits automatic status checks every 30 seconds.</li>
-          <li><strong class="text-green-500">Solve Crises:</strong> Alex encounters unique malfunctions each Sol. Guide his repairs.</li>
-          <li><strong class="text-green-500">Rest Cycle:</strong> Order Alex to <span class="text-green-300 font-bold">"rest"</span> or <span class="text-green-300 font-bold">"sleep"</span> when fatigued.</li>
-        </ul>
+      <!-- Meaningless Signal Waveforms -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>RF Carrier Wave / Carrier Lock</span>
+          <span>84.2 MHz</span>
+        </div>
+        <div class="waveform-container">
+          <canvas id="wave-canvas" class="waveform-canvas"></canvas>
+        </div>
       </div>
 
-      <!-- QUICK COMMAND BUTTONS -->
-      <div class="pt-2 border-t border-green-900 space-y-2">
-        <h3 class="text-[10px] text-green-700 font-bold uppercase">Quick Controls</h3>
-        <button 
-          onclick="sendQuickCommand('Give me a full telemetry diagnostic read.')"
-          class="w-full text-left text-[11px] bg-black hover:bg-zinc-900 text-green-400 border border-green-800 px-2 py-1.5 rounded transition-colors"
-        >
-          &gt; Request Diagnostic
-        </button>
-        <button 
-          onclick="sendQuickCommand('End of shift. Turn in and get some rest, Alex.')"
-          class="w-full text-left text-[11px] bg-green-950 hover:bg-green-900 text-green-300 border border-green-600 px-2 py-1.5 rounded font-bold transition-colors"
-        >
-          &gt; Order Rest Cycle (Advance Sol)
-        </button>
+      <!-- Station Telemetry -->
+      <div class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <span>Outpost Telemetry</span>
+          <span>SYS DIAG</span>
+        </div>
+        <div class="telemetry-grid">
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>PWR</span><span id="val-PWR">65%</span></div>
+            <div class="progress-bar"><div class="progress-fill warning" id="bar-PWR" style="width: 65%;"></div></div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>BATT</span><span id="val-BATT">70%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-BATT" style="width: 70%;"></div></div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>O2</span><span id="val-O2">92%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-O2" style="width: 92%;"></div></div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>H2O</span><span id="val-H2O">85%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-H2O" style="width: 85%;"></div></div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>FOOD</span><span id="val-FOOD">78%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-FOOD" style="width: 78%;"></div></div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>RAD</span><span id="val-RAD">14%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-RAD" style="width: 14%;"></div></div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>HEALTH</span><span id="val-HEALTH">96%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-HEALTH" style="width: 96%;"></div></div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label"><span>FATIGUE</span><span id="val-FATIGUE">25%</span></div>
+            <div class="progress-bar"><div class="progress-fill" id="bar-FATIGUE" style="width: 25%;"></div></div>
+          </div>
+        </div>
       </div>
 
-    </aside>
-  </div>
+    </div>
 
-  <!-- TELEMETRY DASHBOARD -->
-  <footer class="grid grid-cols-4 sm:grid-cols-8 gap-2 text-center text-xs">
-    <div id="box-PWR" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('PWR')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">PWR</div>
-      <div id="val-PWR" class="font-extrabold text-green-400 text-sm">75%</div>
-    </div>
-    <div id="box-BATT" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('BATT')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">BATT</div>
-      <div id="val-BATT" class="font-extrabold text-green-400 text-sm">80%</div>
-    </div>
-    <div id="box-O2" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('O2')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">O2</div>
-      <div id="val-O2" class="font-extrabold text-green-400 text-sm">94%</div>
-    </div>
-    <div id="box-H2O" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('H2O')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">H2O</div>
-      <div id="val-H2O" class="font-extrabold text-green-400 text-sm">88%</div>
-    </div>
-    <div id="box-FOOD" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('FOOD')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">FOOD</div>
-      <div id="val-FOOD" class="font-extrabold text-green-400 text-sm">80%</div>
-    </div>
-    <div id="box-RAD" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('RAD')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">RAD</div>
-      <div id="val-RAD" class="font-extrabold text-green-400 text-sm">12%</div>
-    </div>
-    <div id="box-HEALTH" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('HEALTH')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">HEALTH</div>
-      <div id="val-HEALTH" class="font-extrabold text-green-400 text-sm">98%</div>
-    </div>
-    <div id="box-FATIGUE" class="p-1.5 bg-zinc-950 border-console-thin relative group">
-      <button onclick="openModal('FATIGUE')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
-      <div class="text-green-700 text-[9px] font-bold uppercase">FATIGUE</div>
-      <div id="val-FATIGUE" class="font-extrabold text-green-400 text-sm">18%</div>
-    </div>
-  </footer>
-
-  <!-- MODAL DIALOG -->
-  <div id="telemetry-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-    <div class="bg-zinc-950 border border-green-500 p-5 max-w-md w-full text-xs space-y-3">
-      <div class="flex justify-between items-center border-b border-green-800 pb-2">
-        <h2 id="modal-title" class="font-bold text-green-400 uppercase text-sm">SYSTEM DETAIL</h2>
-        <button onclick="closeModal()" class="text-green-600 hover:text-green-300 font-bold">[X]</button>
+    <!-- Right Terminal Panel -->
+    <div class="panel terminal-panel">
+      <div class="panel-header">
+        <span>Comm Feed :: Mission Control &lt;--&gt; Alex Rivera</span>
+        <span>ENCRYPTED</span>
       </div>
-      <p id="modal-body" class="text-green-600">Loading system status details...</p>
-      <button onclick="closeModal()" class="w-full py-1.5 bg-green-950 hover:bg-green-900 border border-green-600 text-green-400 font-bold uppercase">Acknowledge</button>
+
+      <div class="terminal-logs" id="terminal-logs">
+        <div class="log-entry system">
+          <div class="log-header">[SYSTEM INITIALIZATION COMPLETE]</div>
+          Establishing high-gain directional array link with Lunar Outpost Alpha... RF lock acquired.
+        </div>
+      </div>
+
+      <form class="input-row" id="comm-form">
+        <input type="text" id="user-input" placeholder="Transmit instructions to Alex Rivera..." autocomplete="off">
+        <button type="submit">TRANSMIT</button>
+      </form>
     </div>
+
   </div>
 
   <script>
-    const chatLog = document.getElementById('chat-log');
-    const chatForm = document.getElementById('chat-form');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    const modal = document.getElementById('telemetry-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalBody = document.getElementById('modal-body');
-
-    let history = [];
-    let currentSol = 1;
-    let currentLunarTime = "06:00 LST";
-    let isRequestPending = false;
-
-    const systemInfo = {
-      PWR: "Photovoltaic Solar Array. Current output varies with panel alignment and lunar dust block.",
-      BATT: "Hab primary lithium storage. Powers vital life support during lunar night cycles.",
-      O2: "Primary atmospheric oxygen scrubbers and emergency reserve tanks.",
-      H2O: "Closed-loop wastewater reclamation and potable water tanks.",
-      FOOD: "Hydroponics unit harvest status and emergency field ration reserves.",
-      RAD: "External radiation telemetry outside Habitat Shell Alpha.",
-      HEALTH: "Bio-monitor metrics (Heart Rate, SpO2, Core Temp).",
-      FATIGUE: "Neurological load and circadian sleep deprivation index."
+    // --- STATE MANAGEMENT ---
+    let gameState = {
+      currentSol: 1,
+      lunarTime: "06:00 LST",
+      history: [],
+      telemetry: {
+        PWR: "65%",
+        BATT: "70%",
+        O2: "92%",
+        H2O: "85%",
+        FOOD: "78%",
+        RAD: "14%",
+        HEALTH: "96%",
+        FATIGUE: "25%"
+      }
     };
 
-    function openModal(key) {
-      modalTitle.innerText = `TELEMETRY :: ${key}`;
-      const currentVal = document.getElementById(`val-${key}`)?.innerText || "N/A";
-      modalBody.innerText = `${systemInfo[key] || 'No extended diagnostics available.'}\n\nCURRENT VALUE: ${currentVal}`;
-      modal.classList.remove('hidden');
+    // --- THREE.JS 3D HOLOGRAM MOON ---
+    let scene, camera, renderer, moonMesh, gridRing;
+
+    function init3DMoon() {
+      const container = document.getElementById('canvas-container');
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.z = 3.2;
+
+      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('moon-canvas'), alpha: true, antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+
+      // Create Hologram Sphere
+      const geometry = new THREE.IcosahedronGeometry(1.1, 4);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x00f0ff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.4
+      });
+      moonMesh = new THREE.Mesh(geometry, material);
+      scene.add(moonMesh);
+
+      // Orbital Ring
+      const ringGeom = new THREE.RingGeometry(1.4, 1.42, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.3 });
+      gridRing = new THREE.Mesh(ringGeom, ringMat);
+      gridRing.rotation.x = Math.PI / 2;
+      scene.add(gridRing);
+
+      function animate() {
+        requestAnimationFrame(animate);
+        moonMesh.rotation.y += 0.003;
+        moonMesh.rotation.x += 0.001;
+        gridRing.rotation.z -= 0.002;
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        if (!container) return;
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
     }
 
-    function closeModal() {
-      modal.classList.add('hidden');
+    // --- MEANINGLESS SIGNAL WAVEFORM ANIMATION ---
+    function initWaveform() {
+      const canvas = document.getElementById('wave-canvas');
+      const ctx = canvas.getContext('2d');
+      let offset = 0;
+
+      function resize() {
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+      }
+      resize();
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 1.5;
+
+        const cy = canvas.height / 2;
+        for (let x = 0; x < canvas.width; x++) {
+          const y = cy + 
+            Math.sin((x + offset) * 0.05) * 12 + 
+            Math.cos((x - offset) * 0.02) * 8 +
+            (Math.random() - 0.5) * 3;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        offset += 2;
+        requestAnimationFrame(draw);
+      }
+      draw();
     }
 
-    function appendMessage(sender, text, type) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = type === 'user' ? 'text-right' : 'text-left';
-      
-      const senderSpan = document.createElement('div');
-      senderSpan.className = type === 'user' ? 'text-[10px] text-zinc-500 uppercase font-bold' : 'text-[10px] text-green-600 uppercase font-bold';
-      senderSpan.innerText = sender;
-
-      const textDiv = document.createElement('div');
-      textDiv.className = type === 'user' 
-        ? 'inline-block bg-zinc-900 border border-zinc-700 text-green-300 px-3 py-1.5 text-xs rounded mt-0.5 text-left max-w-[85%]' 
-        : 'inline-block bg-zinc-950 border border-green-800 text-green-400 px-3 py-1.5 text-xs rounded mt-0.5 max-w-[85%] whitespace-pre-wrap';
-      textDiv.innerText = text;
-
-      msgDiv.appendChild(senderSpan);
-      msgDiv.appendChild(textDiv);
-      chatLog.appendChild(msgDiv);
-      chatLog.scrollTop = chatLog.scrollHeight;
-
-      return textDiv;
-    }
-
-    function sendQuickCommand(text) {
-      userInput.value = text;
-      chatForm.dispatchEvent(new Event('submit'));
-    }
-
-    function updateSolTracker() {
-      document.getElementById('sol-tracker-text').innerText = `SOL ${currentSol} / 13`;
-      const pct = (currentSol / 13) * 100;
-      document.getElementById('sol-progress-bar').style.width = `${pct}%`;
-      document.getElementById('lmt-clock').innerText = `SOL ${currentSol} :: LUNAR TIME ${currentLunarTime}`;
-    }
-
-    function updateTelemetryUI(telemetryData) {
-      if (!telemetryData) return;
-
-      Object.entries(telemetryData).forEach(([key, value]) => {
-        const valEl = document.getElementById(`val-${key}`);
-        const boxEl = document.getElementById(`box-${key}`);
-
-        if (valEl) valEl.innerText = value;
-
-        const numVal = parseInt(value, 10);
-
-        if (boxEl && !isNaN(numVal)) {
-          if ((key === 'BATT' || key === 'PWR') && numVal < 70) {
-            boxEl.className = "p-1.5 bg-red-950 border-2 border-red-500 font-bold relative group";
-            if (valEl) valEl.className = "font-black text-red-400 text-sm";
-          } else if ((key === 'BATT' || key === 'PWR') && numVal >= 70) {
-            boxEl.className = "p-1.5 bg-zinc-950 border-console-thin relative group";
-            if (valEl) valEl.className = "font-extrabold text-green-400 text-sm";
-          }
+    // --- UI UPDATES ---
+    function updateTelemetryUI(telemetry) {
+      if (!telemetry) return;
+      Object.keys(telemetry).forEach(key => {
+        const val = telemetry[key];
+        const valElem = document.getElementById(`val-${key}`);
+        const barElem = document.getElementById(`bar-${key}`);
+        if (valElem) valElem.textContent = val;
+        if (barElem) {
+          const numeric = parseInt(val) || 0;
+          barElem.style.width = `${numeric}%`;
+          barElem.className = 'progress-fill' + (numeric < 30 ? ' critical' : numeric < 60 ? ' warning' : '');
         }
       });
     }
 
-    async function sendTransmission(messageText, isAutoPing = false) {
-      if (isRequestPending) return;
+    function addLogEntry(speaker, text, type = 'model') {
+      const logs = document.getElementById('terminal-logs');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      
+      const header = document.createElement('div');
+      header.className = 'log-header';
+      header.textContent = `[${speaker} :: ${gameState.lunarTime}]`;
+      
+      const body = document.createElement('div');
+      body.textContent = text;
 
-      isRequestPending = true;
-      sendBtn.disabled = true;
+      entry.appendChild(header);
+      entry.appendChild(body);
+      logs.appendChild(entry);
+      logs.scrollTop = logs.scrollHeight;
+    }
 
-      if (!isAutoPing) {
-        appendMessage('MISSION CONTROL', messageText, 'user');
-        userInput.value = '';
-      } else {
-        const autoNotice = document.createElement('div');
-        autoNotice.className = 'text-[10px] text-zinc-600 italic text-center border-y border-zinc-900 py-0.5 my-1';
-        autoNotice.innerText = '[AUTOMATED TELEMETRY BEACON :: 30S INTERVAL Ping Received]';
-        chatLog.appendChild(autoNotice);
+    // --- API COMMUNICATION ---
+    async function sendMessage(userText) {
+      if (userText) {
+        addLogEntry('MISSION CONTROL', userText, 'user');
       }
 
-      const loadingDiv = appendMessage('ALEX RIVERA', 'TRANSMITTING VIA RF LINK...', 'bot');
-
       try {
-        const response = await fetch('/api/chat', {
+        const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            message: messageText, 
-            history,
-            currentSol,
-            lunarTime: currentLunarTime
+          body: JSON.stringify({
+            message: userText,
+            history: gameState.history,
+            currentSol: gameState.currentSol,
+            lunarTime: gameState.lunarTime
           })
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Transmission failed.');
+        if (data.reply) {
+          addLogEntry('ALEX RIVERA', data.reply, 'model');
+          
+          // Save interaction history
+          if (userText) gameState.history.push({ role: 'user', parts: [{ text: userText }] });
+          gameState.history.push({ role: 'model', parts: [{ text: data.reply }] });
+
+          // Update Time & Sol
+          if (data.nextLunarTime) gameState.lunarTime = data.nextLunarTime;
+          if (data.shouldAdvanceSol) {
+            gameState.currentSol += 1;
+            addLogEntry('SYSTEM', `*** SOL ADVANCED TO SOL ${gameState.currentSol} ***`, 'system');
+          }
+
+          document.getElementById('time-display').textContent = `[SOL ${String(gameState.currentSol).padStart(2, '0')} :: ${gameState.lunarTime}]`;
+
+          // Update Telemetry
+          if (data.telemetry) {
+            gameState.telemetry = data.telemetry;
+            updateTelemetryUI(data.telemetry);
+          }
+        } else if (data.error) {
+          addLogEntry('SYSTEM ERROR', data.error, 'system');
         }
-
-        loadingDiv.innerText = data.reply;
-
-        if (data.nextLunarTime) {
-          currentLunarTime = data.nextLunarTime;
-        }
-
-        if (data.shouldAdvanceSol) {
-          currentSol += 1;
-          currentLunarTime = "06:00 LST";
-          appendMessage('SYSTEM', `--- REST CYCLE COMPLETE :: ADVANCING TO SOL ${currentSol} ---`, 'bot');
-        }
-
-        updateSolTracker();
-
-        if (data.telemetry) {
-          updateTelemetryUI(data.telemetry);
-        }
-
-        history.push({ role: 'user', parts: [{ text: messageText }] });
-        history.push({ role: 'model', parts: [{ text: data.reply }] });
-
       } catch (err) {
-        loadingDiv.innerText = 'ERROR: ' + err.message;
-        loadingDiv.classList.add('text-red-500');
-      } finally {
-        isRequestPending = false;
-        sendBtn.disabled = false;
+        addLogEntry('TRANSMISSION ERROR', 'Failed to reach backend relay: ' + err.message, 'system');
       }
     }
 
-    chatForm.addEventListener('submit', (e) => {
+    // --- EVENT LISTENERS ---
+    document.getElementById('comm-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const message = userInput.value.trim();
-      if (!message) return;
-      sendTransmission(message, false);
+      const input = document.getElementById('user-input');
+      const val = input.value.trim();
+      if (!val) return;
+      input.value = '';
+      sendMessage(val);
     });
 
-    // 30-SECOND UNPROMPTED AUTOMATED UPDATE TIMER
-    setInterval(() => {
-      if (!isRequestPending) {
-        sendTransmission("[AUTOMATED 30S TELEMETRY & STATUS UPDATE REQUEST]", true);
-      }
-    }, 30000);
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      init3DMoon();
+      initWaveform();
+      updateTelemetryUI(gameState.telemetry);
+      
+      // Initial automated status request ping
+      setTimeout(() => {
+        sendMessage("[AUTOMATED TRANSMISSION RECOVERY PING]");
+      }, 1000);
+    });
   </script>
 </body>
 </html>
