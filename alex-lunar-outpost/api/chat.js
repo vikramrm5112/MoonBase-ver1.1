@@ -16,20 +16,20 @@ Respond as Alex in character. Keep responses brief, practical, and conversationa
 Never repeat previous canned lines if Mission Control sends a new question or update.
 `.trim();
 
-  // Map history to proper Gemini contents structure
+  // Format conversation history into valid Gemini turns
   const formattedContents = history.map(item => ({
     role: item.role === 'model' || item.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: item.parts?.[0]?.text || item.text || '' }]
   }));
 
-  // Append current user message
+  // Add the new user message
   formattedContents.push({
     role: 'user',
     parts: [{ text: message }]
   });
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
