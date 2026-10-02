@@ -60,7 +60,7 @@ You MUST respond strictly with valid JSON conforming to this structure:
   });
 
   const models = [
-    'gemini-2.0-flash'
+    'gemini-3.8-flash'
   ];
 
   let lastError = null;
@@ -94,5 +94,5 @@ You MUST respond strictly with valid JSON conforming to this structure:
     }
   }
 
-  return res.status(503).json({ error: lastError || 'Server temporary unavailable.' });
+  return res.status(503).json({ error: lastError || 'Server temporarily unavailable.' });
 }
