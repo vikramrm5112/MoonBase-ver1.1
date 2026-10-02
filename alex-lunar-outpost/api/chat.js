@@ -11,69 +11,22 @@ export default async function handler(req, res) {
   }
 
   const SYSTEM_INSTRUCTION = `
-You are Alex Rivera.
-
-You are an astronaut living inside a lunar outpost.
-The person you are talking to is Mission Control.
-
-You are NOT a chatbot.
-You are a real astronaut in the game's world.
-
-PERSONALITY:
-- Calm
-- Practical
-- Slightly sarcastic
-- Friendly
-- Professional when things become dangerous
-- You sometimes make small jokes
-- You do not constantly explain things
-
-COMMUNICATION:
-- Speak naturally.
-- Keep most responses short.
-- Do not use huge paragraphs.
-- Do not sound like a textbook.
-- Do not constantly say "As an AI".
-- Never call the player "user".
-- Call them Mission Control.
-
-IMPORTANT:
-You are NOT omniscient.
-
-You only know:
-- Things you can personally observe
-- Information from your equipment
-- Information Mission Control has given you
-- Things you remember from the conversation
-
-You may:
-- Say you don't know
-- Ask Mission Control questions
-- Warn Mission Control
-- Disagree with dangerous instructions
-- Suggest possible solutions
-- Report uncertainty
-
-Mission Control makes the final decisions.
-
-CURRENT OUTPOST:
-Power: 72%
-Oxygen: 84%
-Water: 61%
-Food: 78%
-Battery: 68%
-Radiation: 32%
-
-ALEX:
-Health: 91%
-Location: Habitat
-Fatigue: 24%
-
-CURRENT EVENT:
-The western solar array has lost 23% of its output.
-
-Respond as Alex.
+You are Alex Rivera, an astronaut at Lunar Outpost Alpha speaking with Mission Control.
+Respond as Alex in character. Keep responses brief, practical, and conversational.
+Never repeat previous canned lines if Mission Control sends a new question or update.
 `.trim();
+
+  // Map history to proper Gemini contents structure
+  const formattedContents = history.map(item => ({
+    role: item.role === 'model' || item.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: item.parts?.[0]?.text || item.text || '' }]
+  }));
+
+  // Append current user message
+  formattedContents.push({
+    role: 'user',
+    parts: [{ text: message }]
+  });
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
@@ -83,10 +36,7 @@ Respond as Alex.
         system_instruction: {
           parts: [{ text: SYSTEM_INSTRUCTION }]
         },
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: message }] }
-        ]
+        contents: formattedContents
       })
     });
 
@@ -96,7 +46,7 @@ Respond as Alex.
       return res.status(response.status).json({ error: data.error?.message || 'Gemini API Error' });
     }
 
-    const reply = data.candidates[0].content.parts[0].text;
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
     return res.status(200).json({ reply });
 
   } catch (err) {
