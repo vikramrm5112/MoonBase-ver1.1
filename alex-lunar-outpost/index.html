@@ -41,7 +41,7 @@
     <main class="lg:col-span-3 flex flex-col border border-green-800 bg-zinc-950 p-3 overflow-hidden relative">
       <div id="chat-log" class="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin max-h-[55vh] lg:max-h-[60vh]">
         <div class="text-xs text-green-700 italic border-b border-zinc-800 pb-2">
-          [SYSTEM INITIALIZED] Direct RF Link established. Mission Sol 1 started. Type instructions to assist Alex Rivera.
+          [SYSTEM INITIALIZED] Direct RF Link established. Auto-telemetry updates enabled (30s interval).
         </div>
       </div>
 
@@ -83,10 +83,9 @@
       <div class="space-y-2 text-xs">
         <h2 class="text-xs font-bold text-green-400 uppercase tracking-wider">Mission Instructions</h2>
         <ul class="list-disc list-inside text-green-600 text-[11px] space-y-1">
-          <li><strong class="text-green-500">Solve Crises:</strong> Alex encounters a unique system malfunction every Sol. Guide his repairs.</li>
-          <li><strong class="text-green-500">Rest / Sol Skip:</strong> When Alex's fatigue rises or tasks are complete, tell Alex to <span class="text-green-300 font-bold">"rest"</span> or <span class="text-green-300 font-bold">"go to sleep"</span>.</li>
-          <li><strong class="text-green-500">Time Skip:</strong> Resting skips Lunar Time directly to 06:00 LST of the next Sol.</li>
-          <li><strong class="text-green-500">Extraction:</strong> Survive through Sol 13 until the Earth Return Vehicle (ERV) arrives for extraction.</li>
+          <li><strong class="text-green-500">Auto Pings:</strong> Alex transmits automatic status checks every 30 seconds.</li>
+          <li><strong class="text-green-500">Solve Crises:</strong> Alex encounters unique malfunctions each Sol. Guide his repairs.</li>
+          <li><strong class="text-green-500">Rest Cycle:</strong> Order Alex to <span class="text-green-300 font-bold">"rest"</span> or <span class="text-green-300 font-bold">"sleep"</span> when fatigued.</li>
         </ul>
       </div>
 
@@ -107,73 +106,51 @@
         </button>
       </div>
 
-      <!-- MISSION BRIEFING STATUS -->
-      <div class="mt-auto pt-2 border-t border-zinc-800 text-[10px] text-zinc-500">
-        STATUS: ERV Orbital rendezvous scheduled for Sol 13. Maintain Outpost operational integrity.
-      </div>
-
     </aside>
   </div>
 
   <!-- TELEMETRY DASHBOARD -->
   <footer class="grid grid-cols-4 sm:grid-cols-8 gap-2 text-center text-xs">
-    
-    <!-- PWR -->
     <div id="box-PWR" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('PWR')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">PWR</div>
       <div id="val-PWR" class="font-extrabold text-green-400 text-sm">75%</div>
     </div>
-
-    <!-- BATT -->
     <div id="box-BATT" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('BATT')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">BATT</div>
       <div id="val-BATT" class="font-extrabold text-green-400 text-sm">80%</div>
     </div>
-
-    <!-- O2 -->
     <div id="box-O2" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('O2')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">O2</div>
       <div id="val-O2" class="font-extrabold text-green-400 text-sm">94%</div>
     </div>
-
-    <!-- H2O -->
     <div id="box-H2O" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('H2O')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">H2O</div>
       <div id="val-H2O" class="font-extrabold text-green-400 text-sm">88%</div>
     </div>
-
-    <!-- FOOD -->
     <div id="box-FOOD" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('FOOD')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">FOOD</div>
       <div id="val-FOOD" class="font-extrabold text-green-400 text-sm">80%</div>
     </div>
-
-    <!-- RAD -->
     <div id="box-RAD" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('RAD')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">RAD</div>
       <div id="val-RAD" class="font-extrabold text-green-400 text-sm">12%</div>
     </div>
-
-    <!-- HEALTH -->
     <div id="box-HEALTH" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('HEALTH')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">HEALTH</div>
       <div id="val-HEALTH" class="font-extrabold text-green-400 text-sm">98%</div>
     </div>
-
-    <!-- FATIGUE -->
     <div id="box-FATIGUE" class="p-1.5 bg-zinc-950 border-console-thin relative group">
       <button onclick="openModal('FATIGUE')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
       <div class="text-green-700 text-[9px] font-bold uppercase">FATIGUE</div>
       <div id="val-FATIGUE" class="font-extrabold text-green-400 text-sm">18%</div>
     </div>
-
   </footer>
 
   <!-- MODAL DIALOG -->
@@ -188,7 +165,6 @@
     </div>
   </div>
 
-  <!-- CLIENT SCRIPT -->
   <script>
     const chatLog = document.getElementById('chat-log');
     const chatForm = document.getElementById('chat-form');
@@ -201,6 +177,7 @@
     let history = [];
     let currentSol = 1;
     let currentLunarTime = "06:00 LST";
+    let isRequestPending = false;
 
     const systemInfo = {
       PWR: "Photovoltaic Solar Array. Current output varies with panel alignment and lunar dust block.",
@@ -281,14 +258,21 @@
       });
     }
 
-    chatForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const message = userInput.value.trim();
-      if (!message) return;
+    async function sendTransmission(messageText, isAutoPing = false) {
+      if (isRequestPending) return;
 
-      appendMessage('MISSION CONTROL', message, 'user');
-      userInput.value = '';
+      isRequestPending = true;
       sendBtn.disabled = true;
+
+      if (!isAutoPing) {
+        appendMessage('MISSION CONTROL', messageText, 'user');
+        userInput.value = '';
+      } else {
+        const autoNotice = document.createElement('div');
+        autoNotice.className = 'text-[10px] text-zinc-600 italic text-center border-y border-zinc-900 py-0.5 my-1';
+        autoNotice.innerText = '[AUTOMATED TELEMETRY BEACON :: 30S INTERVAL Ping Received]';
+        chatLog.appendChild(autoNotice);
+      }
 
       const loadingDiv = appendMessage('ALEX RIVERA', 'TRANSMITTING VIA RF LINK...', 'bot');
 
@@ -297,7 +281,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            message, 
+            message: messageText, 
             history,
             currentSol,
             lunarTime: currentLunarTime
@@ -316,7 +300,6 @@
           currentLunarTime = data.nextLunarTime;
         }
 
-        // Advance Sol if rest cycle triggered
         if (data.shouldAdvanceSol) {
           currentSol += 1;
           currentLunarTime = "06:00 LST";
@@ -329,16 +312,31 @@
           updateTelemetryUI(data.telemetry);
         }
 
-        history.push({ role: 'user', parts: [{ text: message }] });
+        history.push({ role: 'user', parts: [{ text: messageText }] });
         history.push({ role: 'model', parts: [{ text: data.reply }] });
 
       } catch (err) {
         loadingDiv.innerText = 'ERROR: ' + err.message;
         loadingDiv.classList.add('text-red-500');
       } finally {
+        isRequestPending = false;
         sendBtn.disabled = false;
       }
+    }
+
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = userInput.value.trim();
+      if (!message) return;
+      sendTransmission(message, false);
     });
+
+    // 30-SECOND UNPROMPTED AUTOMATED UPDATE TIMER
+    setInterval(() => {
+      if (!isRequestPending) {
+        sendTransmission("[AUTOMATED 30S TELEMETRY & STATUS UPDATE REQUEST]", true);
+      }
+    }, 30000);
   </script>
 </body>
 </html>
