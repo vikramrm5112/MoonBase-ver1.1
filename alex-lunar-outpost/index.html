@@ -1,418 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LUNAR OUTPOST - COMMS CONSOLE</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LUNAR OUTPOST ALPHA :: RF TERMINAL</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
-    
-    * {
-      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M7 0h2v6H7zM7 10h2v6H7zM0 7h6v2H0zM10 7h6v2h-6z" fill="%2322c55e"/><rect x="7" y="7" width="2" height="2" fill="%2322c55e"/></svg>') 8 8, auto !important;
-    }
-
-    button, a, input, [role="button"] {
-      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M7 0h2v6H7zM7 10h2v6H7zM0 7h6v2H0zM10 7h6v2h-6z" fill="%234ade80"/><rect x="6" y="6" width="4" height="4" fill="%23ffffff"/></svg>') 8 8, pointer !important;
-    }
-
-    body {
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .border-console {
-      border: 2px solid #22c55e;
-    }
-
     .border-console-thin {
-      border: 1px solid #16a34a;
+      border: 1px solid #15803d;
     }
-
-    .border-console-dim {
-      border: 1px solid #14532d;
+    .scrollbar-thin::-webkit-scrollbar {
+      width: 4px;
     }
-
-    .border-console-red {
-      border: 2px solid #ef4444;
+    .scrollbar-thin::-webkit-scrollbar-track {
+      background: #09090b;
     }
-
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #052e16;
-      border-left: 1px solid #16a34a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #22c55e;
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      background: #15803d;
     }
   </style>
 </head>
-<body class="bg-black text-green-500 h-screen flex flex-col p-3 gap-3 overflow-hidden select-none">
+<body class="bg-black text-green-500 font-mono min-h-screen flex flex-col p-2 sm:p-4 selection:bg-green-500 selection:text-black">
 
-  <!-- ==================== DIAGNOSTIC POPUP MODAL ==================== -->
-  <div id="diagModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-zinc-950 border-2 border-green-500 max-w-lg w-full p-5 shadow-[0_0_20px_rgba(34,197,94,0.3)] font-mono space-y-4">
-      
-      <!-- Modal Header -->
-      <div class="flex justify-between items-center border-b border-green-800 pb-2">
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 bg-green-500 inline-block animate-pulse"></span>
-          <span id="modalTitle" class="font-black text-sm text-green-400 uppercase tracking-wider">SYSTEM DIAGNOSTIC</span>
-        </div>
-        <button onclick="closeModal()" class="text-xs bg-red-950 hover:bg-red-900 border border-red-500 text-red-400 font-bold px-2 py-1">
-          [X] CLOSE
-        </button>
-      </div>
-
-      <!-- Modal Body Sections -->
-      <div class="space-y-3 text-xs leading-relaxed">
-        
-        <!-- 1. What it is -->
-        <div class="bg-black p-2.5 border-console-dim">
-          <span class="font-bold text-green-400 uppercase block mb-1">1. WHAT THIS IS:</span>
-          <p id="modalDesc" class="text-green-300"></p>
-        </div>
-
-        <!-- 2. What to do if it goes down -->
-        <div class="bg-black p-2.5 border-console-dim">
-          <span class="font-bold text-green-400 uppercase block mb-1">2. WHAT TO DO IF IT FAILS:</span>
-          <p id="modalFix" class="text-green-300"></p>
-        </div>
-
-        <!-- 3. Consequences if broken -->
-        <div class="bg-red-950/40 p-2.5 border border-red-800">
-          <span class="font-bold text-red-400 uppercase block mb-1">3. IF IT STAYS BROKEN (RISKS):</span>
-          <p id="modalRisk" class="text-red-200"></p>
-        </div>
-
-        <!-- 4. Consequences after repairing -->
-        <div class="bg-green-950/40 p-2.5 border border-green-800">
-          <span class="font-bold text-green-400 uppercase block mb-1">4. AFTER YOU FIX IT (BENEFITS):</span>
-          <p id="modalReward" class="text-green-200"></p>
-        </div>
-
-      </div>
-
-      <!-- Action Button -->
-      <button onclick="closeModal()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-2 text-xs border-console uppercase tracking-wider">
-        ACKNOWLEDGE &amp; RETURN TO CONSOLE
-      </button>
-
+  <!-- TOP HEADER & STATUS BAR -->
+  <header class="border border-green-700 bg-zinc-950 p-3 mb-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+    <div>
+      <h1 class="text-base font-black tracking-widest text-green-400 uppercase">Lunar Outpost Alpha // RF Comms</h1>
+      <p class="text-[10px] text-green-700">STATION ID: LOA-42-B | OPERATOR: ALEX RIVERA</p>
     </div>
-  </div>
+    <div class="text-right flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto text-[11px] border-t sm:border-t-0 border-zinc-800 pt-1 sm:pt-0">
+      <span class="text-green-600 font-bold">SIGNAL: DIRECT RF [STABLE]</span>
+      <span id="lmt-clock" class="text-green-400 font-bold">LMT MET 312:14:05</span>
+    </div>
+  </header>
 
-
-  <!-- ==================== INTRO / BOOT SCREEN ==================== -->
-  <div id="introScreen" class="fixed inset-0 bg-black z-40 p-6 flex flex-col justify-between overflow-y-auto">
+  <!-- MAIN TERMINAL AREA -->
+  <main class="flex-1 flex flex-col border border-green-800 bg-zinc-950 p-3 mb-3 overflow-hidden relative">
     
-    <!-- Top Terminal Banner -->
-    <div class="border-console p-4 bg-zinc-950 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)]">
-      <div class="flex justify-between items-center border-b border-green-800 pb-2 mb-3">
-        <div class="text-xs text-green-600 tracking-widest font-bold">[DEEP SPACE NETWORK :: LUNAR SUBNET]</div>
-        <div class="text-xs bg-green-950 text-green-400 px-2 py-0.5 border-console-thin">RESTRICTED ACCESS</div>
+    <!-- CHAT MESSAGES LOG -->
+    <div id="chat-log" class="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin max-h-[60vh] sm:max-h-[65vh]">
+      <div class="text-xs text-green-700 italic border-b border-zinc-800 pb-2">
+        [SYSTEM INITIALIZED] Direct RF Link established with Alex Rivera at Lunar Outpost Alpha. Send transmission...
       </div>
-      <h1 class="text-xl sm:text-2xl font-black text-green-400 tracking-wider uppercase mb-1">
-        LUNAR OUTPOST ALPHA :: MISSION CONTROL
-      </h1>
-      <p class="text-xs text-green-600">DIRECT RF COMMS RELAY HUB // LUNAR SURFACE SECTOR 4</p>
     </div>
 
-    <!-- Center Briefing Box -->
-    <div class="max-w-3xl mx-auto w-full my-auto py-6 space-y-4">
-      <div class="border-console p-5 bg-zinc-950 shadow-[6px_6px_0px_0px_rgba(34,197,94,0.3)] space-y-4">
-        
-        <div class="border-b border-green-800 pb-2">
-          <span class="text-xs font-bold text-green-400 tracking-widest uppercase">&gt;&gt; MISSION BRIEFING</span>
-        </div>
-
-        <p class="text-xs text-green-300 leading-relaxed">
-          You are connecting to the high-gain communications terminal at <strong class="text-green-400">Lunar Outpost Alpha</strong>. You are assuming the role of <strong class="text-green-400">Mission Control</strong>.
-        </p>
-
-        <p class="text-xs text-green-300 leading-relaxed">
-          Astronaut <strong class="text-green-400">Alex Rivera</strong> is currently isolated inside the habitat module. A telemetry anomaly has been detected on the western solar array (-23% power output).
-        </p>
-
-        <!-- Status Summary Checklist -->
-        <div class="bg-black p-3 border-console-dim text-[11px] font-mono space-y-1.5 text-green-500">
-          <div class="flex justify-between">
-            <span>STATION TELEMETRY LINK:</span>
-            <span class="text-green-400 font-bold">[ONLINE]</span>
-          </div>
-          <div class="flex justify-between">
-            <span>ASTRONAUT BIOMETRICS (A. RIVERA):</span>
-            <span class="text-green-400 font-bold">[STABLE - HEALTH 91%]</span>
-          </div>
-          <div class="flex justify-between">
-            <span>ACTIVE INCIDENT:</span>
-            <span class="text-red-500 font-bold">[WESTERN ARRAY OUTPUT DROP -23%]</span>
-          </div>
-        </div>
-
-        <p class="text-xs text-green-600 italic">
-          * Warning: Directives issued to field personnel carry operational risk. Monitor station telemetry before issuing hazardous orders.
-        </p>
-
-      </div>
-
-      <!-- Start Console Button -->
+    <!-- TRANSMISSION INPUT FORM -->
+    <form id="chat-form" class="mt-3 pt-3 border-t border-green-900 flex gap-2">
+      <input 
+        type="text" 
+        id="user-input" 
+        autocomplete="off" 
+        placeholder="Type transmission to Alex Rivera..." 
+        class="flex-1 bg-black border border-green-700 text-green-400 px-3 py-2 text-sm focus:outline-none focus:border-green-400 placeholder-green-800"
+      />
       <button 
-        onclick="startMission()"
-        class="w-full bg-green-500 hover:bg-green-400 text-black font-black text-sm py-3 border-console uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+        type="submit" 
+        id="send-btn"
+        class="bg-green-950 hover:bg-green-900 text-green-400 border border-green-600 px-5 py-2 text-sm font-bold uppercase transition-colors disabled:opacity-50"
       >
-        [ INITIALIZE COMMS LINK &amp; BEGIN ]
+        Transmit
       </button>
-    </div>
+    </form>
+  </main>
 
-    <!-- Footer System Info -->
-    <div class="text-center text-[10px] text-green-700 font-mono tracking-widest">
-      SYSTEM VERSION 2.4.0 // GEMINI RF PROXY ACTIVE // CLASSIFIED NASA/MC-LUNAR
-    </div>
-
-  </div>
-
-
-  <!-- ==================== MAIN DASHBOARD ==================== -->
-  <!-- TOP SPLIT SECTION -->
-  <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3 min-h-0">
+  <!-- TELEMETRY DASHBOARD -->
+  <footer class="grid grid-cols-4 sm:grid-cols-8 gap-2 text-center text-xs">
     
-    <!-- LEFT: ALEX CHAT (2 COLUMNS) -->
-    <div class="md:col-span-2 bg-black border-console shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)] flex flex-col h-full overflow-hidden">
-      
-      <!-- Console Header Bar -->
-      <div class="bg-green-950 text-green-400 p-2.5 flex justify-between items-center border-b-2 border-green-500 font-bold text-xs tracking-wider">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 bg-green-500 inline-block"></span>
-          <span>[SYS_COMMS_LINK] :: ALEX RIVERA</span>
-        </div>
-        <div class="text-[10px] text-green-600 font-mono tracking-widest">MODE: DIRECT-RF // 142.80MHz</div>
-      </div>
-
-      <!-- Message History Display -->
-      <div id="chatMessages" class="flex-1 p-3 overflow-y-auto space-y-3 bg-black text-xs font-mono">
-        <div class="bg-zinc-950 border-console-thin p-3 max-w-[85%] text-green-400 self-start shadow-[2px_2px_0px_0px_rgba(34,197,94,0.3)]">
-          <div class="text-[10px] font-bold text-green-600 mb-1">ALEX RIVERA &gt;&gt;</div>
-          Mission Control, Alex here. Western solar array output dropped by 23%. No internal alarms yet, but let me know what you want me to inspect first.
-        </div>
-      </div>
-
-      <!-- Command Input Bar -->
-      <form id="chatForm" class="p-2.5 bg-black border-t-2 border-green-500 flex gap-2 items-center">
-        <input 
-          type="text" 
-          id="userInput" 
-          placeholder="ENTER DIRECTIVE..." 
-          required
-          autocomplete="off"
-          class="flex-1 p-2 bg-zinc-950 border-console-thin text-green-400 focus:outline-none focus:border-green-400 text-xs font-mono font-semibold placeholder:text-green-800"
-        />
-        <button 
-          type="submit" 
-          id="sendBtn"
-          class="bg-green-500 hover:bg-green-400 text-black font-bold px-5 py-2 text-xs border-console uppercase tracking-wider active:translate-x-[1px] active:translate-y-[1px] transition-all"
-        >
-          TRANSMIT
-        </button>
-      </form>
+    <!-- PWR -->
+    <div id="box-PWR" class="p-1.5 bg-red-950 border-2 border-red-500 font-bold relative group">
+      <button onclick="openModal('PWR')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-900 text-red-200 border border-red-400 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-red-400 text-[9px] font-extrabold uppercase">PWR</div>
+      <div id="val-PWR" class="font-black text-red-400 text-sm">45%</div>
     </div>
 
-    <!-- RIGHT: INSTRUCTIONS FOR USER (1 COLUMN) -->
-    <div class="bg-black border-console shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)] p-3 flex flex-col overflow-y-auto font-mono">
-      <div class="bg-green-950 border-console-thin p-1.5 mb-3 text-center">
-        <h2 class="font-bold text-xs uppercase tracking-widest text-green-400">OPERATIONAL DIRECTIVES</h2>
-      </div>
-
-      <div class="space-y-3 text-xs leading-relaxed text-green-500">
-        <div class="border-console-dim p-2 bg-zinc-950">
-          <span class="font-bold block text-green-400 uppercase underline mb-1">COMMANDER ROLE</span>
-          You are Mission Control supervising astronaut Alex Rivera at Lunar Outpost Alpha.
-        </div>
-
-        <div class="border-console-dim p-2 bg-zinc-950 space-y-1">
-          <span class="font-bold block text-green-400 uppercase underline mb-1">PROTOCOLS</span>
-          <p>• Provide precise tactical directives.</p>
-          <p>• Monitor real-time telemetry metrics prior to issuing dangerous EVA commands.</p>
-          <p>• Alex possesses field autonomy and will contest high-risk parameters.</p>
-        </div>
-
-        <div class="border-console-red p-2.5 bg-red-950/60 text-red-200 shadow-[2px_2px_0px_0px_rgba(239,68,68,0.3)]">
-          <span class="font-bold block text-[10px] tracking-wider uppercase text-red-400">!! ACTIVE INCIDENT !!</span>
-          <p class="text-[11px] mt-1 font-semibold">Western solar array degraded (-23%). Diagnose issue before battery reserve depletes.</p>
-        </div>
-      </div>
+    <!-- BATT -->
+    <div id="box-BATT" class="p-1.5 bg-red-950 border-2 border-red-500 font-bold relative group">
+      <button onclick="openModal('BATT')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-900 text-red-200 border border-red-400 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-red-400 text-[9px] font-extrabold uppercase">BATT</div>
+      <div id="val-BATT" class="font-black text-red-400 text-sm">62%</div>
     </div>
 
-  </div>
-
-  <!-- BOTTOM PANEL: OUTPOST / TELEMETRY DASHBOARD -->
-  <div class="bg-black border-console shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)] p-2.5 flex flex-col gap-2 font-mono">
-    
-    <div class="flex justify-between items-center border-b-2 border-green-500 pb-1.5">
-      <div class="flex items-center gap-2">
-        <span class="font-bold text-xs uppercase tracking-widest text-green-400">[OUTPOST TELEMETRY &amp; BIOMETRICS]</span>
-      </div>
-      <span class="text-[10px] bg-green-500 text-black font-bold px-2 py-0.5 border-console-thin uppercase tracking-widest">
-        SYS_STATUS: ONLINE
-      </span>
+    <!-- O2 -->
+    <div id="box-O2" class="p-1.5 bg-zinc-950 border-console-thin relative group">
+      <button onclick="openModal('O2')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-green-700 text-[9px] font-bold uppercase">O2</div>
+      <div id="val-O2" class="font-extrabold text-green-400 text-sm">94%</div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 text-center text-xs">
-      
-      <!-- PWR -->
-      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
-        <button onclick="openModal('PWR')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">PWR</div>
-        <div class="font-extrabold text-green-400 text-sm">72%</div>
-      </div>
+    <!-- H2O -->
+    <div id="box-H2O" class="p-1.5 bg-zinc-950 border-console-thin relative group">
+      <button onclick="openModal('H2O')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-green-700 text-[9px] font-bold uppercase">H2O</div>
+      <div id="val-H2O" class="font-extrabold text-green-400 text-sm">88%</div>
+    </div>
 
-      <!-- O2 -->
-      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
-        <button onclick="openModal('O2')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">O2</div>
-        <div class="font-extrabold text-green-400 text-sm">84%</div>
-      </div>
+    <!-- FOOD -->
+    <div id="box-FOOD" class="p-1.5 bg-zinc-950 border-console-thin relative group">
+      <button onclick="openModal('FOOD')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-green-700 text-[9px] font-bold uppercase">FOOD</div>
+      <div id="val-FOOD" class="font-extrabold text-green-400 text-sm">80%</div>
+    </div>
 
-      <!-- H2O -->
-      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
-        <button onclick="openModal('H2O')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">H2O</div>
-        <div class="font-extrabold text-green-400 text-sm">61%</div>
-      </div>
+    <!-- RAD -->
+    <div id="box-RAD" class="p-1.5 bg-zinc-950 border-console-thin relative group">
+      <button onclick="openModal('RAD')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-green-700 text-[9px] font-bold uppercase">RAD</div>
+      <div id="val-RAD" class="font-extrabold text-green-400 text-sm">12%</div>
+    </div>
 
-      <!-- FOOD -->
-      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
-        <button onclick="openModal('FOOD')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">FOOD</div>
-        <div class="font-extrabold text-green-400 text-sm">78%</div>
-      </div>
+    <!-- HEALTH -->
+    <div id="box-HEALTH" class="p-1.5 bg-zinc-950 border-console-thin relative group">
+      <button onclick="openModal('HEALTH')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-green-700 text-[9px] font-bold uppercase">HEALTH</div>
+      <div id="val-HEALTH" class="font-extrabold text-green-400 text-sm">98%</div>
+    </div>
 
-      <!-- BATT (Warning Red) -->
-      <div class="p-1.5 bg-red-950 border-2 border-red-500 font-bold relative group">
-        <button onclick="openModal('BATT')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-red-900 hover:bg-red-500 text-red-200 hover:text-black border border-red-400 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-red-400 text-[9px] font-extrabold uppercase tracking-wider">BATT</div>
-        <div class="font-black text-red-400 text-sm">68%</div>
-      </div>
+    <!-- FATIGUE -->
+    <div id="box-FATIGUE" class="p-1.5 bg-zinc-950 border-console-thin relative group">
+      <button onclick="openModal('FATIGUE')" class="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center">!</button>
+      <div class="text-green-700 text-[9px] font-bold uppercase">FATIGUE</div>
+      <div id="val-FATIGUE" class="font-extrabold text-green-400 text-sm">18%</div>
+    </div>
 
-      <!-- RAD -->
-      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
-        <button onclick="openModal('RAD')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">RAD</div>
-        <div class="font-extrabold text-green-400 text-sm">32%</div>
-      </div>
+  </footer>
 
-      <!-- HEALTH -->
-      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
-        <button onclick="openModal('HEALTH')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">HEALTH</div>
-        <div class="font-extrabold text-green-400 text-sm">91%</div>
+  <!-- MODAL DIALOG -->
+  <div id="telemetry-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-950 border border-green-500 p-5 max-w-md w-full text-xs space-y-3">
+      <div class="flex justify-between items-center border-b border-green-800 pb-2">
+        <h2 id="modal-title" class="font-bold text-green-400 uppercase text-sm">SYSTEM DETAIL</h2>
+        <button onclick="closeModal()" class="text-green-600 hover:text-green-300 font-bold">[X]</button>
       </div>
-
-      <!-- FATIGUE -->
-      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
-        <button onclick="openModal('FATIGUE')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">FATIGUE</div>
-        <div class="font-extrabold text-green-400 text-sm">24%</div>
-      </div>
-
+      <p id="modal-body" class="text-green-600">Loading system status details...</p>
+      <button onclick="closeModal()" class="w-full py-1.5 bg-green-950 hover:bg-green-900 border border-green-600 text-green-400 font-bold uppercase">Acknowledge</button>
     </div>
   </div>
 
+  <!-- SCRIPT -->
   <script>
-    const introScreen = document.getElementById('introScreen');
-    const chatMessages = document.getElementById('chatMessages');
-    const chatForm = document.getElementById('chatForm');
-    const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const diagModal = document.getElementById('diagModal');
+    const chatLog = document.getElementById('chat-log');
+    const chatForm = document.getElementById('chat-form');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const modal = document.getElementById('telemetry-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalBody = document.getElementById('modal-body');
 
-    // Diagnostic information dictionary in plain, clear language
-    const diagData = {
-      PWR: {
-        title: "MAIN POWER (PWR)",
-        desc: "Electricity generated from solar panels on the outpost roof.",
-        fix: "Send Alex outside on a moonwalk to clean off moon dust or plug back loose cables.",
-        risk: "Lights and heaters shut down. Life support systems switch to emergency batteries.",
-        reward: "Base runs smoothly at 100% efficiency and battery reserves start charging up again."
-      },
-      O2: {
-        title: "OXYGEN RESERVE (O2)",
-        desc: "Breathable air stored in tanks and generated by oxygen recyclers.",
-        fix: "Fix air leaks in suit/habitat seals or replace scrubbers.",
-        risk: "Breathing gets hard, head hurts, and Alex passes out from lack of air.",
-        reward: "Air flow returns to normal, letting Alex breathe easy and stay fully focused."
-      },
-      H2O: {
-        title: "WATER SUPPLY (H2O)",
-        desc: "Clean drinking and cooling water recycled from base filters.",
-        fix: "Unclog water filter pumps or thaw frozen pipes outside.",
-        risk: "Alex suffers from thirst, and suit cooling systems fail causing overheating.",
-        reward: "Fresh drinking water is restored and suit temperatures stay comfortable."
-      },
-      FOOD: {
-        title: "RATIONS & NUTRITION (FOOD)",
-        desc: "Packaged astronaut meals and nutrient bars.",
-        fix: "Restock rations from emergency storage or repair pantry lock.",
-        risk: "Weakness, slow reactions, and low energy levels.",
-        reward: "Alex regains physical strength and stamina for long work shifts."
-      },
-      BATT: {
-        title: "BATTERY RESERVE (BATT)",
-        desc: "Backup energy stored for when solar panels aren't working.",
-        fix: "Reduce power usage or repair solar power flow to recharge cells.",
-        risk: "Total station blackout. All digital comms and heaters stop completely.",
-        reward: "Emergency backup power fully recharges, giving base full protection against outages."
-      },
-      RAD: {
-        title: "RADIATION EXPOSURE (RAD)",
-        desc: "Space radiation level measured inside and outside the station.",
-        fix: "Move inside shielded storm shelter rooms or wait out solar flares.",
-        risk: "Radiation sickness, dizziness, nausea, and long-term tissue damage.",
-        reward: "Radiation levels drop back to safe levels, protecting overall health."
-      },
-      HEALTH: {
-        title: "BIOMETRIC HEALTH (HEALTH)",
-        desc: "Alex's overall physical state, pulse, and medical health.",
-        fix: "Use medical kit supplies, eat warm meals, and rest inside.",
-        risk: "Loss of consciousness or inability to perform basic tasks.",
-        reward: "Alex returns to full strength and can safely perform moonwalk repairs."
-      },
-      FATIGUE: {
-        title: "FATIGUE & EXHAUSTION (FATIGUE)",
-        desc: "How tired Alex feels after hours of physical work.",
-        fix: "Order Alex to take a sleep cycle inside the hab module.",
-        risk: "Slow response time, mistakes during repairs, and accidental injuries.",
-        reward: "Alex wakes up well-rested, sharp, and ready for critical missions."
-      }
+    let history = [];
+
+    // System info texts for modal popup
+    const systemInfo = {
+      PWR: "Main Photovoltaic Solar Array. Current output varies based on array alignment and debris coverage.",
+      BATT: "Hab primary lithium-ion energy storage system. Reserves feed life support when solar generation is low.",
+      O2: "Primary atmospheric oxygen scrubbers and reserve tank pressurized levels.",
+      H2O: "Closed-loop wastewater reclamation and drinking water storage tanks.",
+      FOOD: "Hydroponics unit harvest status and emergency field ration reserves.",
+      RAD: "External solar flare & cosmic radiation exposure level outside Habitat Shell Alpha.",
+      HEALTH: "Bio-monitor telemetry from suit/hab metrics (Heart Rate, Blood Oxygen, Core Temp).",
+      FATIGUE: "Neurological load and circadian rhythm tracking for Alex Rivera."
     };
 
     function openModal(key) {
-      const data = diagData[key];
-      if (!data) return;
-
-      document.getElementById('modalTitle').innerText = data.title;
-      document.getElementById('modalDesc').innerText = data.desc;
-      document.getElementById('modalFix').innerText = data.fix;
-      document.getElementById('modalRisk').innerText = data.risk;
-      document.getElementById('modalReward').innerText = data.reward;
-
-      diagModal.classList.remove('hidden');
+      modalTitle.innerText = `TELEMETRY :: ${key}`;
+      const currentVal = document.getElementById(`val-${key}`)?.innerText || "N/A";
+      modalBody.innerText = `${systemInfo[key] || 'No extended diagnostics available.'}\n\nCURRENT VALUE: ${currentVal}`;
+      modal.classList.remove('hidden');
     }
 
     function closeModal() {
-      diagModal.classList.add('hidden');
+      modal.classList.add('hidden');
     }
 
-    // Initialize history with initial turn
-    let history = [
-      { role: 'model', parts: [{ text: "Mission Control, Alex here. Western solar array output dropped by 23%. No internal alarms yet, but let me know what you want me to inspect first." }] }
-    ];
+    function appendMessage(sender, text, type) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = type === 'user' ? 'text-right' : 'text-left';
+      
+      const senderSpan = document.createElement('div');
+      senderSpan.className = type === 'user' ? 'text-[10px] text-zinc-500 uppercase font-bold' : 'text-[10px] text-green-600 uppercase font-bold';
+      senderSpan.innerText = sender;
 
-    function startMission() {
-      introScreen.classList.add('hidden');
-      userInput.focus();
+      const textDiv = document.createElement('div');
+      textDiv.className = type === 'user' 
+        ? 'inline-block bg-zinc-900 border border-zinc-700 text-green-300 px-3 py-1.5 text-xs rounded mt-0.5 text-left max-w-[85%]' 
+        : 'inline-block bg-zinc-950 border border-green-800 text-green-400 px-3 py-1.5 text-xs rounded mt-0.5 max-w-[85%] whitespace-pre-wrap';
+      textDiv.innerText = text;
+
+      msgDiv.appendChild(senderSpan);
+      msgDiv.appendChild(textDiv);
+      chatLog.appendChild(msgDiv);
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      return textDiv;
     }
 
+    // Dynamic UI update engine driven by Alex's structured JSON
+    function updateTelemetryUI(telemetryData) {
+      if (!telemetryData) return;
+
+      Object.entries(telemetryData).forEach(([key, value]) => {
+        const valEl = document.getElementById(`val-${key}`);
+        const boxEl = document.getElementById(`box-${key}`);
+
+        if (valEl) {
+          valEl.innerText = value;
+        }
+
+        const numVal = parseInt(value, 10);
+
+        if (boxEl && !isNaN(numVal)) {
+          // If battery or power rises back to nominal (>= 75%), return to normal dark green box
+          if ((key === 'BATT' || key === 'PWR') && numVal >= 75) {
+            boxEl.className = "p-1.5 bg-zinc-950 border-console-thin relative group";
+            if (valEl) valEl.className = "font-extrabold text-green-400 text-sm";
+            const btn = boxEl.querySelector('button');
+            if (btn) btn.className = "absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-950 text-green-400 border border-green-500 text-[8px] flex items-center justify-center";
+            const title = boxEl.querySelector('div:nth-child(2)');
+            if (title) title.className = "text-green-700 text-[9px] font-bold uppercase";
+          } 
+          // If battery or power falls below 70%, trigger critical red warning alert box
+          else if ((key === 'BATT' || key === 'PWR') && numVal < 70) {
+            boxEl.className = "p-1.5 bg-red-950 border-2 border-red-500 font-bold relative group";
+            if (valEl) valEl.className = "font-black text-red-400 text-sm";
+            const btn = boxEl.querySelector('button');
+            if (btn) btn.className = "absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-900 text-red-200 border border-red-400 text-[8px] flex items-center justify-center";
+            const title = boxEl.querySelector('div:nth-child(2)');
+            if (title) title.className = "text-red-400 text-[9px] font-extrabold uppercase";
+          }
+        }
+      });
+    }
+
+    // Form Submission Handler
     chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const message = userInput.value.trim();
@@ -422,7 +240,7 @@
       userInput.value = '';
       sendBtn.disabled = true;
 
-      const loadingDiv = appendMessage('ALEX RIVERA', 'TRANSMITTING...', 'bot');
+      const loadingDiv = appendMessage('ALEX RIVERA', 'TRANSMITTING VIA RF LINK...', 'bot');
 
       try {
         const response = await fetch('/api/chat', {
@@ -437,11 +255,23 @@
           throw new Error(data.error || 'Transmission failed.');
         }
 
-        loadingDiv.innerText = data.reply;
-        
-        // Save history in exact format expected by Gemini API
+        // Display reply text
+        loadingDiv.innerText = data.reply || data;
+
+        // Extract and display mission timestamp if available
+        const match = (data.reply || '').match(/\[(LMT\vert{}MET\vert{}LUNAR TIME)[^\]]+\]/i);
+        if (match) {
+          document.getElementById('lmt-clock').innerText = match[0].replace('[', '').replace(']', '');
+        }
+
+        // Update dashboard UI dynamically if Alex included telemetry
+        if (data.telemetry) {
+          updateTelemetryUI(data.telemetry);
+        }
+
+        // Save conversation history turns
         history.push({ role: 'user', parts: [{ text: message }] });
-        history.push({ role: 'model', parts: [{ text: data.reply }] });
+        history.push({ role: 'model', parts: [{ text: data.reply || data }] });
 
       } catch (err) {
         loadingDiv.innerText = 'ERROR: ' + err.message;
@@ -450,30 +280,6 @@
         sendBtn.disabled = false;
       }
     });
-
-    function appendMessage(senderLabel, text, sender) {
-      const wrapper = document.createElement('div');
-      const isUser = sender === 'user';
-
-      wrapper.className = isUser 
-        ? 'bg-green-950 text-green-300 border-console-thin p-3 max-w-[85%] ml-auto shadow-[2px_2px_0px_0px_rgba(34,197,94,0.2)]' 
-        : 'bg-zinc-950 border-console-thin p-3 max-w-[85%] text-green-400 mr-auto shadow-[2px_2px_0px_0px_rgba(34,197,94,0.3)]';
-
-      const label = document.createElement('div');
-      label.className = `text-[10px] font-bold mb-1 ${isUser ? 'text-green-500' : 'text-green-600'}`;
-      label.textContent = `${senderLabel} >>`;
-
-      const content = document.createElement('div');
-      content.textContent = text;
-
-      wrapper.appendChild(label);
-      wrapper.appendChild(content);
-
-      chatMessages.appendChild(wrapper);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-
-      return content;
-    }
   </script>
 </body>
 </html>
