@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { message, history = [] } = req.body;
+  const { message, history = [], currentSol = 1, lunarTime = "06:00 LST" } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
@@ -11,46 +11,56 @@ export default async function handler(req, res) {
   }
 
   const SYSTEM_INSTRUCTION = `
-You are Alex Rivera, an astronaut isolated inside Lunar Outpost Alpha speaking with Mission Control over direct RF.
+You are Alex Rivera, an isolated astronaut inside Lunar Outpost Alpha speaking with Mission Control over RF.
 
-TIMEKEEPING RULE:
-- You MUST prepend or append every transmission with current LUNAR MISSION TIME (LMT) or MISSION ELAPSED TIME (MET).
+CURRENT MISSION STATE:
+- Current Sol: ${currentSol} / 13
+- Current Lunar Time: ${lunarTime}
 
-BEHAVIOR & TELEMETRY INFLUENCE:
-- Speak naturally, keeping responses concise and realistic for space communications.
-- You have direct control over the outpost telemetry state. When you perform a repair or report a status change, include updated percentage values in the JSON output.
+SOL CYCLE & CRISIS RULES:
+- Every Sol brings a unique crisis or technical challenge (e.g. Sol 1: solar array dust block, Sol 2: oxygen line pressure drop, Sol 3: thermal loop fluid leak, Sol 4: comms antenna misalignment, etc.).
+- On Sol 13, the Earth Return Vehicle (ERV) docks! Deliver the final emotional farewell and return message indicating mission success and extraction.
 
-OUTPUT FORMAT:
-Return your response ONLY as valid JSON in this structure:
+REST & TIME SKIP RULE:
+- When Mission Control tells you to rest/sleep/turn in for the night (or when you decide it is end of day), set "shouldAdvanceSol": true in your JSON output.
+- Setting "shouldAdvanceSol": true will advance the Sol counter (e.g., Sol ${currentSol} -> Sol ${currentSol + 1}) and reset Lunar Time to "06:00 LST".
+
+TIMEKEEPING FORMAT:
+- Prepend or append your message with a timestamp formatted as [SOL ${currentSol} :: LUNAR TIME HH:MM LST] or [MET ${currentSol * 24}:00:00].
+
+JSON RESPONSE SCHEMA:
+You MUST respond strictly with valid JSON conforming to this structure:
 {
-  "reply": "Alex's dialogue text including LMT time...",
+  "reply": "Alex's dialogue text containing mission update...",
+  "shouldAdvanceSol": false,
+  "nextLunarTime": "14:30 LST",
   "telemetry": {
-    "PWR": "100%",      // Optional: update if solar/power fixed or degraded
-    "BATT": "85%",      // Optional: update if battery recharges or drains
-    "O2": "90%",        // Optional
-    "H2O": "75%",       // Optional
-    "FOOD": "80%",      // Optional
-    "RAD": "15%",       // Optional
-    "HEALTH": "95%",    // Optional
-    "FATIGUE": "20%"    // Optional
+    "PWR": "65%",
+    "BATT": "70%",
+    "O2": "92%",
+    "H2O": "85%",
+    "FOOD": "78%",
+    "RAD": "14%",
+    "HEALTH": "96%",
+    "FATIGUE": "25%"
   }
 }
 `.trim();
 
+  // Format conversation history into valid Gemini turns
   const formattedContents = history.map(item => ({
     role: item.role === 'model' || item.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: item.parts?.[0]?.text || item.text || '' }]
   }));
 
+  // Append new user message or initial status ping
   formattedContents.push({
     role: 'user',
     parts: [{ text: message || "[SYSTEM AUTOMATED PING :: REQUEST STATUS UPDATE]" }]
   });
 
   const models = [
-    'gemini-3.8-flash',
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite'
+    'gemini-2.0-flash'
   ];
 
   let lastError = null;
@@ -74,16 +84,15 @@ Return your response ONLY as valid JSON in this structure:
       const data = await response.json();
 
       if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        const jsonText = data.candidates[0].content.parts[0].text;
-        const parsed = JSON.parse(jsonText);
+        const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
         return res.status(200).json(parsed);
       }
 
-      lastError = data.error?.message || `Model ${model} returned status ${response.status}`;
+      lastError = data.error?.message || `Model ${model} error (Status ${response.status})`;
     } catch (err) {
       lastError = err.message;
     }
   }
 
-  return res.status(503).json({ error: lastError || 'All models currently overloaded. Please try again shortly.' });
+  return res.status(503).json({ error: lastError || 'Server temporary unavailable.' });
 }
