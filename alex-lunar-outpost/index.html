@@ -126,16 +126,15 @@
 
     /* Meaningless Telemetry Wave Visualizer */
     .waveform-container {
-      height: 70px;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
+      height: 80px;
+      position: relative;
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .waveform-canvas {
       width: 100%;
       height: 100%;
+      display: block;
     }
 
     /* Telemetry Bars */
@@ -277,7 +276,7 @@
     }
   </style>
 
-  <!-- Three.js Library for Holographic Moon Visual -->
+  <!-- Three.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -303,13 +302,13 @@
         </div>
       </div>
 
-      <!-- Meaningless Signal Waveforms -->
+      <!-- Three.js Signal Waveform Visualizer -->
       <div class="panel">
         <div class="panel-header">
           <span>RF Carrier Wave / Carrier Lock</span>
           <span>84.2 MHz</span>
         </div>
-        <div class="waveform-container">
+        <div class="waveform-container" id="wave-container">
           <canvas id="wave-canvas" class="waveform-canvas"></canvas>
         </div>
       </div>
@@ -399,85 +398,134 @@
     };
 
     // --- THREE.JS 3D HOLOGRAM MOON ---
-    let scene, camera, renderer, moonMesh, gridRing;
+    let moonScene, moonCamera, moonRenderer, moonMesh, gridRing, craterGroup;
 
     function init3DMoon() {
       const container = document.getElementById('canvas-container');
-      scene = new THREE.Scene();
+      moonScene = new THREE.Scene();
 
-      camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-      camera.position.z = 3.2;
+      moonCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+      moonCamera.position.z = 3.2;
 
-      renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('moon-canvas'), alpha: true, antialias: true });
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      moonRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('moon-canvas'), alpha: true, antialias: true });
+      moonRenderer.setSize(container.clientWidth, container.clientHeight);
 
-      // Create Hologram Sphere
+      // Create Primary Hologram Sphere
       const geometry = new THREE.IcosahedronGeometry(1.1, 4);
       const material = new THREE.MeshBasicMaterial({
         color: 0x00f0ff,
         wireframe: true,
         transparent: true,
-        opacity: 0.4
+        opacity: 0.35
       });
       moonMesh = new THREE.Mesh(geometry, material);
-      scene.add(moonMesh);
+      moonScene.add(moonMesh);
+
+      // Add Random Crater/Detail Nodes in 3D Space
+      craterGroup = new THREE.Group();
+      const pointsGeom = new THREE.BufferGeometry();
+      const pointPositions = [];
+      for (let i = 0; i < 80; i++) {
+        const u = Math.random();
+        const v = Math.random();
+        const theta = u * 2.0 * Math.PI;
+        const phi = Math.acos(2.0 * v - 1.0);
+        const r = 1.12;
+        pointPositions.push(
+          r * Math.sin(phi) * Math.cos(theta),
+          r * Math.sin(phi) * Math.sin(theta),
+          r * Math.cos(phi)
+        );
+      }
+      pointsGeom.setAttribute('position', new THREE.Float32BufferAttribute(pointPositions, 3));
+      const pointsMat = new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.03, transparent: true, opacity: 0.8 });
+      const craterPoints = new THREE.Points(pointsGeom, pointsMat);
+      craterGroup.add(craterPoints);
+      moonMesh.add(craterGroup);
 
       // Orbital Ring
       const ringGeom = new THREE.RingGeometry(1.4, 1.42, 64);
       const ringMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.3 });
       gridRing = new THREE.Mesh(ringGeom, ringMat);
-      gridRing.rotation.x = Math.PI / 2;
-      scene.add(gridRing);
+      gridRing.rotation.x = Math.PI / 2.2;
+      moonScene.add(gridRing);
 
-      function animate() {
-        requestAnimationFrame(animate);
+      function animateMoon() {
+        requestAnimationFrame(animateMoon);
         moonMesh.rotation.y += 0.003;
         moonMesh.rotation.x += 0.001;
         gridRing.rotation.z -= 0.002;
-        renderer.render(scene, camera);
+        moonRenderer.render(moonScene, moonCamera);
       }
-      animate();
+      animateMoon();
 
       window.addEventListener('resize', () => {
         if (!container) return;
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        moonCamera.aspect = container.clientWidth / container.clientHeight;
+        moonCamera.updateProjectionMatrix();
+        moonRenderer.setSize(container.clientWidth, container.clientHeight);
       });
     }
 
-    // --- MEANINGLESS SIGNAL WAVEFORM ANIMATION ---
-    function initWaveform() {
+    // --- THREE.JS 3D SIGNAL WAVEFORM VISUALIZER ---
+    let waveScene, waveCamera, waveRenderer, waveLine, waveGeometry;
+
+    function init3DWaveform() {
+      const container = document.getElementById('wave-container');
       const canvas = document.getElementById('wave-canvas');
-      const ctx = canvas.getContext('2d');
-      let offset = 0;
 
-      function resize() {
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
+      waveScene = new THREE.Scene();
+      waveCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+      waveCamera.position.set(0, 0, 5);
+
+      waveRenderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+      waveRenderer.setSize(container.clientWidth, container.clientHeight);
+
+      const segmentCount = 128;
+      const points = [];
+      for (let i = 0; i <= segmentCount; i++) {
+        const x = (i / segmentCount) * 6 - 3;
+        points.push(new THREE.Vector3(x, 0, 0));
       }
-      resize();
 
-      function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        ctx.strokeStyle = '#00f0ff';
-        ctx.lineWidth = 1.5;
+      waveGeometry = new THREE.BufferGeometry().setFromPoints(points);
+      const waveMaterial = new THREE.LineBasicMaterial({
+        color: 0x00f0ff,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.85
+      });
 
-        const cy = canvas.height / 2;
-        for (let x = 0; x < canvas.width; x++) {
-          const y = cy + 
-            Math.sin((x + offset) * 0.05) * 12 + 
-            Math.cos((x - offset) * 0.02) * 8 +
-            (Math.random() - 0.5) * 3;
-          if (x === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+      waveLine = new THREE.Line(waveGeometry, waveMaterial);
+      waveScene.add(waveLine);
+
+      let step = 0;
+      function animateWave() {
+        requestAnimationFrame(animateWave);
+        step += 0.04;
+
+        const positions = waveGeometry.attributes.position.array;
+        for (let i = 0; i <= segmentCount; i++) {
+          const x = (i / segmentCount) * 6 - 3;
+          // Calculate dynamic 3D wave displacement
+          const y = Math.sin(x * 3 + step) * 0.35 + Math.cos(x * 5 - step * 1.5) * 0.15 + (Math.random() - 0.5) * 0.03;
+          const z = Math.sin(x * 2 + step) * 0.2;
+          
+          positions[i * 3 + 1] = y;
+          positions[i * 3 + 2] = z;
         }
-        ctx.stroke();
-        offset += 2;
-        requestAnimationFrame(draw);
+        waveGeometry.attributes.position.needsUpdate = true;
+
+        waveRenderer.render(waveScene, waveCamera);
       }
-      draw();
+      animateWave();
+
+      window.addEventListener('resize', () => {
+        if (!container) return;
+        waveCamera.aspect = container.clientWidth / container.clientHeight;
+        waveCamera.updateProjectionMatrix();
+        waveRenderer.setSize(container.clientWidth, container.clientHeight);
+      });
     }
 
     // --- UI UPDATES ---
@@ -576,7 +624,7 @@
     // --- INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', () => {
       init3DMoon();
-      initWaveform();
+      init3DWaveform();
       updateTelemetryUI(gameState.telemetry);
       
       // Initial automated status request ping
