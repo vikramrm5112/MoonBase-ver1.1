@@ -3,25 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LUNAR OUTPOST ALPHA :: COMMS CONSOLE</title>
+  <title>LUNAR OUTPOST - COMMS CONSOLE</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&display=swap');
     
-    /* Crosshair Custom Cursor Data URI for Main Canvas */
     * {
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M7 0h2v6H7zM7 10h2v6H7zM0 7h6v2H0zM10 7h6v2h-6z" fill="%2322c55e"/><rect x="7" y="7" width="2" height="2" fill="%2322c55e"/></svg>') 8 8, auto !important;
+    }
+
+    button, a, input, [role="button"] {
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M7 0h2v6H7zM7 10h2v6H7zM0 7h6v2H0zM10 7h6v2h-6z" fill="%234ade80"/><rect x="6" y="6" width="4" height="4" fill="%23ffffff"/></svg>') 8 8, pointer !important;
+    }
+
+    body {
       font-family: 'JetBrains Mono', monospace;
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2322c55e' stroke-width='2' stroke-linecap='square'%3E%3Cline x1='12' y1='2' x2='12' y2='9'/%3E%3Cline x1='12' y1='15' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='9' y2='12'/%3E%3Cline x1='15' y1='12' x2='22' y2='12'/%3E%3Ccircle cx='12' cy='12' r='2' fill='%2322c55e'/%3E%3C/svg%3E") 12 12, auto;
-    }
-
-    /* Target Pointer Cursor Data URI for Buttons and Clickables */
-    button, a, [role="button"], .clickable {
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234ade80' stroke-width='2.5'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3C/svg%3E") 12 12, pointer !important;
-    }
-
-    /* Standard Text Input Cursor */
-    input[type="text"], textarea {
-      cursor: text !important;
     }
 
     .border-console {
@@ -54,19 +50,72 @@
 </head>
 <body class="bg-black text-green-500 h-screen flex flex-col p-3 gap-3 overflow-hidden select-none">
 
+  <!-- ==================== DIAGNOSTIC POPUP MODAL ==================== -->
+  <div id="diagModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-zinc-950 border-2 border-green-500 max-w-lg w-full p-5 shadow-[0_0_20px_rgba(34,197,94,0.3)] font-mono space-y-4">
+      
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center border-b border-green-800 pb-2">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 bg-green-500 inline-block animate-pulse"></span>
+          <span id="modalTitle" class="font-black text-sm text-green-400 uppercase tracking-wider">SYSTEM DIAGNOSTIC</span>
+        </div>
+        <button onclick="closeModal()" class="text-xs bg-red-950 hover:bg-red-900 border border-red-500 text-red-400 font-bold px-2 py-1">
+          [X] CLOSE
+        </button>
+      </div>
+
+      <!-- Modal Body Sections -->
+      <div class="space-y-3 text-xs leading-relaxed">
+        
+        <!-- 1. What it is -->
+        <div class="bg-black p-2.5 border-console-dim">
+          <span class="font-bold text-green-400 uppercase block mb-1">1. WHAT THIS IS:</span>
+          <p id="modalDesc" class="text-green-300"></p>
+        </div>
+
+        <!-- 2. What to do if it goes down -->
+        <div class="bg-black p-2.5 border-console-dim">
+          <span class="font-bold text-green-400 uppercase block mb-1">2. WHAT TO DO IF IT FAILS:</span>
+          <p id="modalFix" class="text-green-300"></p>
+        </div>
+
+        <!-- 3. Consequences if broken -->
+        <div class="bg-red-950/40 p-2.5 border border-red-800">
+          <span class="font-bold text-red-400 uppercase block mb-1">3. IF IT STAYS BROKEN (RISKS):</span>
+          <p id="modalRisk" class="text-red-200"></p>
+        </div>
+
+        <!-- 4. Consequences after repairing -->
+        <div class="bg-green-950/40 p-2.5 border border-green-800">
+          <span class="font-bold text-green-400 uppercase block mb-1">4. AFTER YOU FIX IT (BENEFITS):</span>
+          <p id="modalReward" class="text-green-200"></p>
+        </div>
+
+      </div>
+
+      <!-- Action Button -->
+      <button onclick="closeModal()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-2 text-xs border-console uppercase tracking-wider">
+        ACKNOWLEDGE &amp; RETURN TO CONSOLE
+      </button>
+
+    </div>
+  </div>
+
+
   <!-- ==================== INTRO / BOOT SCREEN ==================== -->
   <div id="introScreen" class="fixed inset-0 bg-black z-40 p-6 flex flex-col justify-between overflow-y-auto">
     
     <!-- Top Terminal Banner -->
     <div class="border-console p-4 bg-zinc-950 shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)]">
       <div class="flex justify-between items-center border-b border-green-800 pb-2 mb-3">
-        <div class="text-xs text-green-600 tracking-widest font-bold">[MOON STATION LINK :: MAIN CHANNEL]</div>
+        <div class="text-xs text-green-600 tracking-widest font-bold">[DEEP SPACE NETWORK :: LUNAR SUBNET]</div>
         <div class="text-xs bg-green-950 text-green-400 px-2 py-0.5 border-console-thin">RESTRICTED ACCESS</div>
       </div>
       <h1 class="text-xl sm:text-2xl font-black text-green-400 tracking-wider uppercase mb-1">
         LUNAR OUTPOST ALPHA :: MISSION CONTROL
       </h1>
-      <p class="text-xs text-green-600">DIRECT RADIO LINK // LUNAR BASE SECTOR 4</p>
+      <p class="text-xs text-green-600">DIRECT RF COMMS RELAY HUB // LUNAR SURFACE SECTOR 4</p>
     </div>
 
     <!-- Center Briefing Box -->
@@ -74,35 +123,35 @@
       <div class="border-console p-5 bg-zinc-950 shadow-[6px_6px_0px_0px_rgba(34,197,94,0.3)] space-y-4">
         
         <div class="border-b border-green-800 pb-2">
-          <span class="text-xs font-bold text-green-400 tracking-widest uppercase">&gt;&gt; YOUR MISSION</span>
+          <span class="text-xs font-bold text-green-400 tracking-widest uppercase">&gt;&gt; MISSION BRIEFING</span>
         </div>
 
         <p class="text-xs text-green-300 leading-relaxed">
-          You are connecting to the radio control desk for <strong class="text-green-400">Lunar Outpost Alpha</strong>. You are taking over as <strong class="text-green-400">Mission Control</strong>.
+          You are connecting to the high-gain communications terminal at <strong class="text-green-400">Lunar Outpost Alpha</strong>. You are assuming the role of <strong class="text-green-400">Mission Control</strong>.
         </p>
 
         <p class="text-xs text-green-300 leading-relaxed">
-          Astronaut <strong class="text-green-400">Alex Rivera</strong> is alone inside the moon base. Power from the West Solar Array just dropped by 23%.
+          Astronaut <strong class="text-green-400">Alex Rivera</strong> is currently isolated inside the habitat module. A telemetry anomaly has been detected on the western solar array (-23% power output).
         </p>
 
         <!-- Status Summary Checklist -->
         <div class="bg-black p-3 border-console-dim text-[11px] font-mono space-y-1.5 text-green-500">
           <div class="flex justify-between">
-            <span>BASE RADIO SIGNAL:</span>
+            <span>STATION TELEMETRY LINK:</span>
             <span class="text-green-400 font-bold">[ONLINE]</span>
           </div>
           <div class="flex justify-between">
-            <span>ASTRONAUT HEALTH (ALEX):</span>
-            <span class="text-green-400 font-bold">[GOOD - 91%]</span>
+            <span>ASTRONAUT BIOMETRICS (A. RIVERA):</span>
+            <span class="text-green-400 font-bold">[STABLE - HEALTH 91%]</span>
           </div>
           <div class="flex justify-between">
-            <span>CURRENT PROBLEM:</span>
-            <span class="text-red-500 font-bold">[WEST SOLAR PANEL POWER DROPPED 23%]</span>
+            <span>ACTIVE INCIDENT:</span>
+            <span class="text-red-500 font-bold">[WESTERN ARRAY OUTPUT DROP -23%]</span>
           </div>
         </div>
 
         <p class="text-xs text-green-600 italic">
-          * Caution: Orders you send will affect Alex's safety. Check base stats before sending Alex into danger.
+          * Warning: Directives issued to field personnel carry operational risk. Monitor station telemetry before issuing hazardous orders.
         </p>
 
       </div>
@@ -110,7 +159,7 @@
       <!-- Start Console Button -->
       <button 
         onclick="startMission()"
-        class="w-full bg-green-500 hover:bg-green-400 text-black font-black text-sm py-3 border-console uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] active:translate-x-[2px] active:translate-y-[2px] transition-all cursor-pointer"
+        class="w-full bg-green-500 hover:bg-green-400 text-black font-black text-sm py-3 border-console uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(34,197,94,0.5)] active:translate-x-[2px] active:translate-y-[2px] transition-all"
       >
         [ INITIALIZE COMMS LINK &amp; BEGIN ]
       </button>
@@ -118,32 +167,33 @@
 
     <!-- Footer System Info -->
     <div class="text-center text-[10px] text-green-700 font-mono tracking-widest">
-      SYSTEM VERSION 2.4.0 // DIRECT RADIO PROXY ACTIVE // MOON BASE COMMAND
+      SYSTEM VERSION 2.4.0 // GEMINI RF PROXY ACTIVE // CLASSIFIED NASA/MC-LUNAR
     </div>
 
   </div>
 
 
   <!-- ==================== MAIN DASHBOARD ==================== -->
+  <!-- TOP SPLIT SECTION -->
   <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3 min-h-0">
     
-    <!-- LEFT: ALEX CHAT CONSOLE (2 COLUMNS) -->
+    <!-- LEFT: ALEX CHAT (2 COLUMNS) -->
     <div class="md:col-span-2 bg-black border-console shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)] flex flex-col h-full overflow-hidden">
       
       <!-- Console Header Bar -->
       <div class="bg-green-950 text-green-400 p-2.5 flex justify-between items-center border-b-2 border-green-500 font-bold text-xs tracking-wider">
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 bg-green-500 inline-block animate-pulse"></span>
-          <span>[RADIO LINK] :: ALEX RIVERA</span>
+          <span class="w-2.5 h-2.5 bg-green-500 inline-block"></span>
+          <span>[SYS_COMMS_LINK] :: ALEX RIVERA</span>
         </div>
-        <div class="text-[10px] text-green-600 font-mono tracking-widest">CHANNEL: 142.80 MHz</div>
+        <div class="text-[10px] text-green-600 font-mono tracking-widest">MODE: DIRECT-RF // 142.80MHz</div>
       </div>
 
       <!-- Message History Display -->
       <div id="chatMessages" class="flex-1 p-3 overflow-y-auto space-y-3 bg-black text-xs font-mono">
         <div class="bg-zinc-950 border-console-thin p-3 max-w-[85%] text-green-400 self-start shadow-[2px_2px_0px_0px_rgba(34,197,94,0.3)]">
           <div class="text-[10px] font-bold text-green-600 mb-1">ALEX RIVERA &gt;&gt;</div>
-          Mission Control, Alex here. Power from the west solar panel just dropped by 23%. No alarms inside the base yet, but what should I check first?
+          Mission Control, Alex here. Western solar array output dropped by 23%. No internal alarms yet, but let me know what you want me to inspect first.
         </div>
       </div>
 
@@ -152,7 +202,7 @@
         <input 
           type="text" 
           id="userInput" 
-          placeholder="TYPE YOUR COMMAND HERE..." 
+          placeholder="ENTER DIRECTIVE..." 
           required
           autocomplete="off"
           class="flex-1 p-2 bg-zinc-950 border-console-thin text-green-400 focus:outline-none focus:border-green-400 text-xs font-mono font-semibold placeholder:text-green-800"
@@ -160,163 +210,113 @@
         <button 
           type="submit" 
           id="sendBtn"
-          class="bg-green-500 hover:bg-green-400 text-black font-bold px-5 py-2 text-xs border-console uppercase tracking-wider active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+          class="bg-green-500 hover:bg-green-400 text-black font-bold px-5 py-2 text-xs border-console uppercase tracking-wider active:translate-x-[1px] active:translate-y-[1px] transition-all"
         >
-          SEND
+          TRANSMIT
         </button>
       </form>
     </div>
 
-    <!-- RIGHT: DIRECTIVES AND WARNING BOX (1 COLUMN) -->
+    <!-- RIGHT: INSTRUCTIONS FOR USER (1 COLUMN) -->
     <div class="bg-black border-console shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)] p-3 flex flex-col overflow-y-auto font-mono">
       <div class="bg-green-950 border-console-thin p-1.5 mb-3 text-center">
-        <h2 class="font-bold text-xs uppercase tracking-widest text-green-400">WHAT TO DO</h2>
+        <h2 class="font-bold text-xs uppercase tracking-widest text-green-400">OPERATIONAL DIRECTIVES</h2>
       </div>
 
       <div class="space-y-3 text-xs leading-relaxed text-green-500">
         <div class="border-console-dim p-2 bg-zinc-950">
-          <span class="font-bold block text-green-400 uppercase underline mb-1">YOUR JOB</span>
-          You are Mission Control. Give clear steps to keep astronaut Alex safe and fix moon base problems.
+          <span class="font-bold block text-green-400 uppercase underline mb-1">COMMANDER ROLE</span>
+          You are Mission Control supervising astronaut Alex Rivera at Lunar Outpost Alpha.
         </div>
 
         <div class="border-console-dim p-2 bg-zinc-950 space-y-1">
-          <span class="font-bold block text-green-400 uppercase underline mb-1">RULES</span>
-          <p>• Give clear and simple orders.</p>
-          <p>• Check base stats before sending Alex outside.</p>
-          <p>• Click the red or green <strong class="text-green-300 font-bold">(!) buttons</strong> below to see simple guides for each stat.</p>
+          <span class="font-bold block text-green-400 uppercase underline mb-1">PROTOCOLS</span>
+          <p>• Provide precise tactical directives.</p>
+          <p>• Monitor real-time telemetry metrics prior to issuing dangerous EVA commands.</p>
+          <p>• Alex possesses field autonomy and will contest high-risk parameters.</p>
         </div>
 
         <div class="border-console-red p-2.5 bg-red-950/60 text-red-200 shadow-[2px_2px_0px_0px_rgba(239,68,68,0.3)]">
-          <span class="font-bold block text-[10px] tracking-wider uppercase text-red-400">!! CURRENT WARNING !!</span>
-          <p class="text-[11px] mt-1 font-semibold">West solar panel is losing power (-23%). Find out why before emergency batteries run out.</p>
+          <span class="font-bold block text-[10px] tracking-wider uppercase text-red-400">!! ACTIVE INCIDENT !!</span>
+          <p class="text-[11px] mt-1 font-semibold">Western solar array degraded (-23%). Diagnose issue before battery reserve depletes.</p>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- BOTTOM PANEL: OUTPOST TELEMETRY DASHBOARD -->
+  <!-- BOTTOM PANEL: OUTPOST / TELEMETRY DASHBOARD -->
   <div class="bg-black border-console shadow-[4px_4px_0px_0px_rgba(34,197,94,0.4)] p-2.5 flex flex-col gap-2 font-mono">
     
     <div class="flex justify-between items-center border-b-2 border-green-500 pb-1.5">
       <div class="flex items-center gap-2">
-        <span class="font-bold text-xs uppercase tracking-widest text-green-400">[BASE METRICS &amp; ALEX HEALTH]</span>
+        <span class="font-bold text-xs uppercase tracking-widest text-green-400">[OUTPOST TELEMETRY &amp; BIOMETRICS]</span>
       </div>
       <span class="text-[10px] bg-green-500 text-black font-bold px-2 py-0.5 border-console-thin uppercase tracking-widest">
-        BASE STATUS: ONLINE
+        SYS_STATUS: ONLINE
       </span>
     </div>
 
-    <!-- Telemetry Cards Grid -->
     <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 text-center text-xs">
       
       <!-- PWR -->
-      <div class="relative p-1.5 bg-zinc-950 border-console-thin">
-        <button onclick="openInfo('PWR')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-green-900 hover:bg-green-500 hover:text-black text-green-300 text-[10px] font-black flex items-center justify-center border border-green-500 transition-colors cursor-pointer" title="System Info">!</button>
+      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
+        <button onclick="openModal('PWR')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
         <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">PWR</div>
         <div class="font-extrabold text-green-400 text-sm">72%</div>
       </div>
 
       <!-- O2 -->
-      <div class="relative p-1.5 bg-zinc-950 border-console-thin">
-        <button onclick="openInfo('O2')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-green-900 hover:bg-green-500 hover:text-black text-green-300 text-[10px] font-black flex items-center justify-center border border-green-500 transition-colors cursor-pointer" title="System Info">!</button>
+      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
+        <button onclick="openModal('O2')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
         <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">O2</div>
         <div class="font-extrabold text-green-400 text-sm">84%</div>
       </div>
 
       <!-- H2O -->
-      <div class="relative p-1.5 bg-zinc-950 border-console-thin">
-        <button onclick="openInfo('H2O')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-green-900 hover:bg-green-500 hover:text-black text-green-300 text-[10px] font-black flex items-center justify-center border border-green-500 transition-colors cursor-pointer" title="System Info">!</button>
+      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
+        <button onclick="openModal('H2O')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
         <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">H2O</div>
         <div class="font-extrabold text-green-400 text-sm">61%</div>
       </div>
 
       <!-- FOOD -->
-      <div class="relative p-1.5 bg-zinc-950 border-console-thin">
-        <button onclick="openInfo('FOOD')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-green-900 hover:bg-green-500 hover:text-black text-green-300 text-[10px] font-black flex items-center justify-center border border-green-500 transition-colors cursor-pointer" title="System Info">!</button>
+      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
+        <button onclick="openModal('FOOD')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
         <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">FOOD</div>
         <div class="font-extrabold text-green-400 text-sm">78%</div>
       </div>
 
-      <!-- BATT (ALERT ITEM) -->
-      <div class="relative p-1.5 bg-red-950 border-2 border-red-500 font-bold">
-        <button onclick="openInfo('BATT')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-red-600 hover:bg-red-400 text-black text-[10px] font-black flex items-center justify-center border border-red-300 transition-colors cursor-pointer animate-pulse" title="Critical Info">!</button>
+      <!-- BATT (Warning Red) -->
+      <div class="p-1.5 bg-red-950 border-2 border-red-500 font-bold relative group">
+        <button onclick="openModal('BATT')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-red-900 hover:bg-red-500 text-red-200 hover:text-black border border-red-400 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
         <div class="text-red-400 text-[9px] font-extrabold uppercase tracking-wider">BATT</div>
         <div class="font-black text-red-400 text-sm">68%</div>
       </div>
 
       <!-- RAD -->
-      <div class="relative p-1.5 bg-zinc-950 border-console-thin">
-        <button onclick="openInfo('RAD')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-green-900 hover:bg-green-500 hover:text-black text-green-300 text-[10px] font-black flex items-center justify-center border border-green-500 transition-colors cursor-pointer" title="System Info">!</button>
+      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
+        <button onclick="openModal('RAD')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
         <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">RAD</div>
         <div class="font-extrabold text-green-400 text-sm">32%</div>
       </div>
 
       <!-- HEALTH -->
-      <div class="relative p-1.5 bg-zinc-950 border-console-thin">
-        <button onclick="openInfo('HEALTH')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-green-900 hover:bg-green-500 hover:text-black text-green-300 text-[10px] font-black flex items-center justify-center border border-green-500 transition-colors cursor-pointer" title="System Info">!</button>
+      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
+        <button onclick="openModal('HEALTH')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
         <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">HEALTH</div>
         <div class="font-extrabold text-green-400 text-sm">91%</div>
       </div>
 
       <!-- FATIGUE -->
-      <div class="relative p-1.5 bg-zinc-950 border-console-thin">
-        <button onclick="openInfo('FATIGUE')" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-green-900 hover:bg-green-500 hover:text-black text-green-300 text-[10px] font-black flex items-center justify-center border border-green-500 transition-colors cursor-pointer" title="System Info">!</button>
-        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">TIRED</div>
+      <div class="p-1.5 bg-zinc-950 border-console-thin relative group">
+        <button onclick="openModal('FATIGUE')" class="absolute top-0.5 right-0.5 w-4 h-4 bg-green-950 hover:bg-green-500 text-green-400 hover:text-black border border-green-500 font-black text-[9px] rounded-full flex items-center justify-center">!</button>
+        <div class="text-green-700 text-[9px] font-bold uppercase tracking-wider">FATIGUE</div>
         <div class="font-extrabold text-green-400 text-sm">24%</div>
       </div>
 
     </div>
   </div>
-
-
-  <!-- ==================== DIAGNOSTIC MODAL ==================== -->
-  <div id="infoModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-zinc-950 border-2 border-green-500 p-5 max-w-lg w-full shadow-[8px_8px_0px_0px_rgba(34,197,94,0.3)] space-y-4 font-mono text-xs">
-      
-      <!-- Modal Header -->
-      <div class="flex justify-between items-center border-b border-green-800 pb-2">
-        <h3 id="modalTitle" class="text-sm font-bold text-green-400 tracking-wider">SYSTEM DIAGNOSTIC</h3>
-        <button onclick="closeInfo()" class="bg-red-900 hover:bg-red-600 text-white font-bold px-2 py-0.5 border border-red-500 cursor-pointer">X</button>
-      </div>
-
-      <div class="space-y-3">
-        <!-- 1. What It Is -->
-        <div class="bg-black p-2.5 border-console-dim">
-          <span class="text-green-400 font-bold block mb-1">1. WHAT IT IS:</span>
-          <p id="modalWhat" class="text-green-300 leading-relaxed"></p>
-        </div>
-
-        <!-- 2. What To Do -->
-        <div class="bg-black p-2.5 border-console-dim">
-          <span class="text-green-400 font-bold block mb-1">2. WHAT TO DO IF IT FAILS:</span>
-          <p id="modalAction" class="text-green-300 leading-relaxed"></p>
-        </div>
-
-        <!-- 3. Likely Consequences -->
-        <div class="bg-black p-2.5 border-console-red bg-red-950/30">
-          <span class="text-red-400 font-bold block mb-1">3. IF LEFT BROKEN:</span>
-          <p id="modalConsequences" class="text-red-200 leading-relaxed"></p>
-        </div>
-
-        <!-- 4. Consequences After Repairing -->
-        <div class="bg-black p-2.5 border-console-dim bg-green-950/30">
-          <span class="text-green-400 font-bold block mb-1">4. AFTER YOU FIX IT:</span>
-          <p id="modalAfterRepair" class="text-green-300 leading-relaxed"></p>
-        </div>
-      </div>
-
-      <!-- Modal Close Button -->
-      <button 
-        onclick="closeInfo()" 
-        class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-2 border-console uppercase tracking-wider cursor-pointer"
-      >
-        CLOSE DIAGNOSTIC
-      </button>
-
-    </div>
-  </div>
-
 
   <script>
     const introScreen = document.getElementById('introScreen');
@@ -324,109 +324,95 @@
     const chatForm = document.getElementById('chatForm');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const diagModal = document.getElementById('diagModal');
 
-    const infoModal = document.getElementById('infoModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalWhat = document.getElementById('modalWhat');
-    const modalAction = document.getElementById('modalAction');
-    const modalConsequences = document.getElementById('modalConsequences');
-    const modalAfterRepair = document.getElementById('modalAfterRepair');
-
-    let history = [];
-
-    // Simple language guide dictionary for each stat
-    const metricData = {
+    // Diagnostic information dictionary in plain, clear language
+    const diagData = {
       PWR: {
-        title: "MAIN POWER (SOLAR PANELS)",
-        what: "The solar panels outside the base generate main electricity from sunlight.",
-        action: "Send Alex outside to clean moon dust off panels or switch to emergency battery power.",
-        consequences: "Lights and machines turn off one by one until the base freezes.",
-        afterRepair: "Main electricity turns back on, batteries start charging again, and all systems run normally."
+        title: "MAIN POWER (PWR)",
+        desc: "Electricity generated from solar panels on the outpost roof.",
+        fix: "Send Alex outside on a moonwalk to clean off moon dust or plug back loose cables.",
+        risk: "Lights and heaters shut down. Life support systems switch to emergency batteries.",
+        reward: "Base runs smoothly at 100% efficiency and battery reserves start charging up again."
       },
       O2: {
-        title: "OXYGEN (AIR SUPPLY)",
-        what: "Clean oxygen gas that Alex breathes inside the moon base.",
-        action: "Check air tanks for leaks, fix the air scrubber machine, or put on the spacesuit.",
-        consequences: "Alex will get dizzy, faint, and run out of air to breathe.",
-        afterRepair: "Air becomes clean and safe to breathe again. Alex can breathe easily without a helmet."
+        title: "OXYGEN RESERVE (O2)",
+        desc: "Breathable air stored in tanks and generated by oxygen recyclers.",
+        fix: "Fix air leaks in suit/habitat seals or replace scrubbers.",
+        risk: "Breathing gets hard, head hurts, and Alex passes out from lack of air.",
+        reward: "Air flow returns to normal, letting Alex breathe easy and stay fully focused."
       },
       H2O: {
-        title: "WATER SUPPLY",
-        what: "Drinking water stored in tanks for drinking, cooking, and cooling base systems.",
-        action: "Fix broken pipes, check water recycling filters, or restrict drinking usage.",
-        consequences: "Alex gets dehydrated, feels weak, and base equipment overheats.",
-        afterRepair: "Water flows normally through pipes again so Alex stays healthy and hydrated."
+        title: "WATER SUPPLY (H2O)",
+        desc: "Clean drinking and cooling water recycled from base filters.",
+        fix: "Unclog water filter pumps or thaw frozen pipes outside.",
+        risk: "Alex suffers from thirst, and suit cooling systems fail causing overheating.",
+        reward: "Fresh drinking water is restored and suit temperatures stay comfortable."
       },
       FOOD: {
-        title: "FOOD RATIONS",
-        what: "Packaged meals and nutrient bars stored in the kitchen freezer.",
-        action: "Count food packages, lower daily meals, or start growing plants in the greenhouse.",
-        consequences: "Alex gets weak, hungry, tired, and cannot work safely.",
-        afterRepair: "Alex gets full energy back, stays strong, and keeps working smoothly."
+        title: "RATIONS & NUTRITION (FOOD)",
+        desc: "Packaged astronaut meals and nutrient bars.",
+        fix: "Restock rations from emergency storage or repair pantry lock.",
+        risk: "Weakness, slow reactions, and low energy levels.",
+        reward: "Alex regains physical strength and stamina for long work shifts."
       },
       BATT: {
-        title: "RESERVE BATTERIES",
-        what: "Backup power batteries that keep the base alive when the solar panels stop working.",
-        action: "Turn off lights in empty rooms and fix the west solar array immediately.",
-        consequences: "When batteries reach 0%, all heater and air systems turn off completely.",
-        afterRepair: "Batteries recharge back to 100% and stay ready for future emergencies."
+        title: "BATTERY RESERVE (BATT)",
+        desc: "Backup energy stored for when solar panels aren't working.",
+        fix: "Reduce power usage or repair solar power flow to recharge cells.",
+        risk: "Total station blackout. All digital comms and heaters stop completely.",
+        reward: "Emergency backup power fully recharges, giving base full protection against outages."
       },
       RAD: {
-        title: "RADIATION SHIELDING",
-        what: "A magnetic shield around the base that blocks harmful sun rays and space radiation.",
-        action: "Stay inside the underground shelter room until sun radiation drops.",
-        consequences: "Alex gets sick from space radiation and base computer chips break.",
-        afterRepair: "Dangerous space rays are blocked again so Alex can walk around the base safely."
+        title: "RADIATION EXPOSURE (RAD)",
+        desc: "Space radiation level measured inside and outside the station.",
+        fix: "Move inside shielded storm shelter rooms or wait out solar flares.",
+        risk: "Radiation sickness, dizziness, nausea, and long-term tissue damage.",
+        reward: "Radiation levels drop back to safe levels, protecting overall health."
       },
       HEALTH: {
-        title: "ALEX'S HEALTH",
-        what: "A live check on Alex's heart rate, body temperature, and physical health.",
-        action: "Tell Alex to rest, drink water, take medicine, or stop dangerous outdoor work.",
-        consequences: "If health drops too low, Alex will pass out or get badly hurt.",
-        afterRepair: "Alex feels good, regains full energy, and can perform hard tasks easily."
+        title: "BIOMETRIC HEALTH (HEALTH)",
+        desc: "Alex's overall physical state, pulse, and medical health.",
+        fix: "Use medical kit supplies, eat warm meals, and rest inside.",
+        risk: "Loss of consciousness or inability to perform basic tasks.",
+        reward: "Alex returns to full strength and can safely perform moonwalk repairs."
       },
       FATIGUE: {
-        title: "TIREDNESS / EXHAUSTION",
-        what: "How tired Alex is feeling after working long hours without rest.",
-        action: "Order Alex to sleep in the bunk room for at least 8 hours.",
-        consequences: "Alex makes mistakes, works slowly, and misses dangerous warnings.",
-        afterRepair: "Alex wakes up rested, sharp, focused, and ready for work."
+        title: "FATIGUE & EXHAUSTION (FATIGUE)",
+        desc: "How tired Alex feels after hours of physical work.",
+        fix: "Order Alex to take a sleep cycle inside the hab module.",
+        risk: "Slow response time, mistakes during repairs, and accidental injuries.",
+        reward: "Alex wakes up well-rested, sharp, and ready for critical missions."
       }
     };
+
+    function openModal(key) {
+      const data = diagData[key];
+      if (!data) return;
+
+      document.getElementById('modalTitle').innerText = data.title;
+      document.getElementById('modalDesc').innerText = data.desc;
+      document.getElementById('modalFix').innerText = data.fix;
+      document.getElementById('modalRisk').innerText = data.risk;
+      document.getElementById('modalReward').innerText = data.reward;
+
+      diagModal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      diagModal.classList.add('hidden');
+    }
+
+    // Initialize history with initial turn
+    let history = [
+      { role: 'model', parts: [{ text: "Mission Control, Alex here. Western solar array output dropped by 23%. No internal alarms yet, but let me know what you want me to inspect first." }] }
+    ];
 
     function startMission() {
       introScreen.classList.add('hidden');
       userInput.focus();
     }
 
-    function openInfo(key) {
-      const data = metricData[key];
-      if (!data) return;
-
-      modalTitle.innerText = `DIAGNOSTIC :: ${data.title}`;
-      modalWhat.innerText = data.what;
-      modalAction.innerText = data.action;
-      modalConsequences.innerText = data.consequences;
-      modalAfterRepair.innerText = data.afterRepair;
-
-      infoModal.classList.remove('hidden');
-    }
-
-    function closeInfo() {
-      infoModal.classList.add('hidden');
-    }
-
-    // Close diagnostic modal when pressing Escape key
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeInfo();
-    });
-
-    // Close modal when clicking dark backdrop outside the box
-    infoModal.addEventListener('click', (e) => {
-      if (e.target === infoModal) closeInfo();
-    });
-
-    // Handle sending user commands in chat
     chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const message = userInput.value.trim();
@@ -436,7 +422,7 @@
       userInput.value = '';
       sendBtn.disabled = true;
 
-      const loadingDiv = appendMessage('ALEX RIVERA', 'RECEIVING RADIO SIGNAL...', 'bot');
+      const loadingDiv = appendMessage('ALEX RIVERA', 'TRANSMITTING...', 'bot');
 
       try {
         const response = await fetch('/api/chat', {
@@ -453,14 +439,13 @@
 
         loadingDiv.innerText = data.reply;
         
+        // Save history in exact format expected by Gemini API
         history.push({ role: 'user', parts: [{ text: message }] });
         history.push({ role: 'model', parts: [{ text: data.reply }] });
 
       } catch (err) {
-        // Simple fallback response simulation if offline
-        setTimeout(() => {
-          loadingDiv.innerText = "Understood Mission Control. I am checking the western solar array connection cables now. Standing by.";
-        }, 1000);
+        loadingDiv.innerText = 'ERROR: ' + err.message;
+        loadingDiv.classList.add('text-red-500');
       } finally {
         sendBtn.disabled = false;
       }
