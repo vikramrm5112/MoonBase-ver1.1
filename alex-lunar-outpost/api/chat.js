@@ -59,12 +59,15 @@ You MUST respond strictly with valid JSON conforming to this structure:
     parts: [{ text: message || "[SYSTEM AUTOMATED PING :: REQUEST STATUS UPDATE]" }]
   });
 
+  // Array of active model strings ordered by preference
   const models = [
-    'gemini-3.8-flash'
+    'gemini-3.8-flash',
+    'gemini-3.5-flash-lite'
   ];
 
   let lastError = null;
 
+  // Try each model sequentially
   for (const model of models) {
     try {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
@@ -88,11 +91,16 @@ You MUST respond strictly with valid JSON conforming to this structure:
         return res.status(200).json(parsed);
       }
 
-      lastError = data.error?.message || `Model ${model} error (Status ${response.status})`;
+      lastError = data.error?.message || `Model ${model} returned status ${response.status}`;
+      console.warn(`[Fallback Warning] ${model} failed: ${lastError}. Trying next model...`);
     } catch (err) {
       lastError = err.message;
+      console.warn(`[Fallback Exception] ${model} failed: ${lastError}. Trying next model...`);
     }
   }
 
-  return res.status(503).json({ error: lastError || 'Server temporarily unavailable.' });
+  // If all models in the fallback loop fail
+  return res.status(503).json({ 
+    error: `All active model endpoints unavailable. Last error: ${lastError}` 
+  });
 }
